@@ -33,7 +33,7 @@ data in Safari wipes all of them).
 | Handstand 3s (3x in one day) | €20 |
 | Handstand 10s | €80 |
 | 10 steps on hands | €50 |
-| Pocket money | €20/month, unconditional |
+| Pocket money | €20 on the 1st of each month, unconditional |
 
 Maximum: **€305**
 
@@ -43,9 +43,19 @@ Maximum: **€305**
 | Reading aloud, 10 min/day, ≥5 of 7 days | weeks 1–3 €1 · 4–6 €1.50 · 7–10 €2 |
 | Bonus: 15 min on ≥4 days in a week | €1 |
 | Early readers, one per fortnight | €2 each, 5 books |
-| Pocket money | €2/week, unconditional |
+| Pocket money | €2 every Monday, unconditional |
 
 Maximum: **€35.50**. No physical challenge in this cycle.
+
+## Pocket money
+
+Paid on the **first day of a period**, never pro-rated for a part period. Monthly lands on
+the 1st, starting with the first 1st that falls on or after the challenge start; weekly
+lands on Monday, same rule. Juna's challenge starts Mon 31 Aug 2026, so August pays
+nothing and her first €20 arrives on 1 Sep. Counting calendar months *touched* — the old
+behaviour — paid twice within two days.
+
+The Money screen states the date of the next payment under the pocket money row.
 
 The weekly rate ladder advances on **qualifying weeks, not calendar weeks**. A missed week
 costs nothing already earned; it only delays reaching the higher rate.
@@ -68,7 +78,9 @@ Deposits go into Bitcoin, a world ETF, or an equal-weighted basket of nine compa
 (Alphabet, Microsoft, SpaceX, NVIDIA, Apple, Amazon, TSMC, Meta, Tesla). The basket is an
 index, base 100, averaged across the nine components' own base-100 indices.
 
-Any deposit held **365 days** earns a **50% match on the deposited amount**, not on market
+Any deposit held **365 whole days** (counted noon-to-noon, so the countdown ticks once a
+day and does not shift with the clock or a timezone change) earns a **50% match on the
+deposited amount**, not on market
 value — so a drawdown of up to 33% still leaves the child above principal. Selling before
 365 days forfeits that deposit's match. Each deposit runs its own clock.
 
