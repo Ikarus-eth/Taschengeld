@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<html lang="de">
+<html lang="en">
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
@@ -54,6 +54,7 @@ button{font-family:inherit;font-size:17px;cursor:pointer;}
   padding:12px 18px;font-weight:600;min-height:48px;}
 .btn.ghost{background:transparent;color:var(--ink);border-color:var(--line);}
 .btn.small{padding:8px 14px;min-height:40px;font-size:15px;}
+.btn.tiny{padding:6px 12px;min-height:36px;font-size:14px;}
 .btn:disabled{opacity:.4;cursor:default;}
 .today{background:var(--card);border:1.5px solid var(--line);border-radius:var(--r);padding:18px;text-align:center;}
 .stamps{display:flex;gap:10px;}
@@ -80,10 +81,12 @@ button{font-family:inherit;font-size:17px;cursor:pointer;}
 .st.now i{border-color:var(--ink);border-width:2px;border-bottom:0;}
 .st.miss i{background:repeating-linear-gradient(45deg,var(--paper),var(--paper) 3px,#E6E2D6 3px,#E6E2D6 6px);}
 .stairlabels{display:flex;justify-content:space-between;font-size:13px;color:var(--ink-soft);margin-top:6px;}
-.check{width:34px;height:34px;border-radius:10px;border:2px solid var(--line);background:var(--paper);flex:none;}
+.check{width:34px;height:34px;border-radius:10px;border:2px solid var(--line);background:var(--paper);flex:none;
+  padding:0;font-family:inherit;}
 .check.on{background:var(--accent);border-color:var(--accent);position:relative;}
 .check.on::after{content:"";position:absolute;left:11px;top:5px;width:8px;height:16px;
   border:solid #fff;border-width:0 3px 3px 0;transform:rotate(42deg);}
+.check[disabled]{opacity:.45;}
 .holding{display:flex;gap:12px;align-items:center;padding:12px 0;border-top:1px solid var(--line);}
 .holding:first-child{border-top:0;}
 .mini{height:6px;border-radius:3px;background:var(--paper);border:1px solid var(--line);overflow:hidden;margin-top:6px;}
@@ -94,6 +97,7 @@ button{font-family:inherit;font-size:17px;cursor:pointer;}
 .choice[aria-pressed="true"]{border-color:var(--accent);background:var(--accent-soft);}
 .choice[disabled]{opacity:.45;}
 .choice .pct{display:block;font-size:13px;font-weight:600;color:var(--ink-soft);margin-top:2px;}
+.choice .risk{display:block;font-size:11px;font-weight:600;color:var(--ink-soft);margin-top:3px;letter-spacing:.06em;}
 .baskets{display:flex;flex-wrap:wrap;gap:6px;margin-top:10px;}
 .chipco{font-size:13px;padding:4px 9px;border-radius:999px;background:var(--paper);
   border:1px solid var(--line);color:var(--ink-soft);}
@@ -107,15 +111,18 @@ nav .ico{font-size:21px;line-height:1;}
 dialog{border:0;border-radius:18px;padding:0;max-width:460px;width:calc(100% - 28px);
   box-shadow:0 12px 44px rgba(27,33,24,.24);color:var(--ink);}
 dialog::backdrop{background:rgba(27,33,24,.42);}
-.dlg{padding:20px;}
+.dlg{padding:20px;max-height:78vh;overflow:auto;}
 .dlg h3{margin:0 0 4px;font-size:21px;}
+.dlg h4{margin:18px 0 2px;font-size:15px;font-weight:700;}
+.dlg p{margin:8px 0;font-size:16px;}
 label{display:block;font-size:14px;font-weight:600;color:var(--ink-soft);margin:14px 0 5px;}
-input,select{width:100%;font-family:inherit;font-size:17px;padding:12px;border-radius:11px;
+input,select,textarea{width:100%;font-family:inherit;font-size:17px;padding:12px;border-radius:11px;
   border:1.5px solid var(--line);background:var(--paper);color:var(--ink);}
 .dlgbtns{display:flex;gap:8px;margin-top:18px;}
 .dlgbtns .btn{flex:1;}
 .foot{font-size:13px;color:var(--ink-soft);text-align:center;margin:26px 0 8px;}
 .warnbox{background:var(--gold-soft);border:1.5px solid #E8D6AE;border-radius:12px;padding:12px;font-size:14px;margin-top:12px;}
+.notebox{background:var(--paper);border:1.5px solid var(--line);border-radius:12px;padding:12px;font-size:14px;margin-top:12px;}
 table{width:100%;border-collapse:collapse;font-size:15px;}
 td{padding:7px 0;border-top:1px solid var(--line);}
 td:last-child{text-align:right;font-variant-numeric:tabular-nums;font-weight:600;}
@@ -138,16 +145,17 @@ tr:first-child td{border-top:0;}
   <p class="foot" id="foot"></p>
 </div>
 <nav role="tablist">
-  <button role="tab" data-v="heute" onclick="setView('heute')"><span class="ico">📖</span>Heute</button>
-  <button role="tab" data-v="ziele" onclick="setView('ziele')"><span class="ico">🎯</span>Ziele</button>
-  <button role="tab" data-v="geld" onclick="setView('geld')"><span class="ico">💰</span>Geld</button>
-  <button role="tab" data-v="sparen" onclick="setView('sparen')"><span class="ico">📈</span>Sparen</button>
-  <button role="tab" data-v="eltern" onclick="askPin()"><span class="ico">🔑</span>Eltern</button>
+  <button role="tab" data-v="today" onclick="setView('today')"><span class="ico">📖</span>Today</button>
+  <button role="tab" data-v="goals" onclick="setView('goals')"><span class="ico">🎯</span>Goals</button>
+  <button role="tab" data-v="money" onclick="setView('money')"><span class="ico">💰</span>Money</button>
+  <button role="tab" data-v="saving" onclick="setView('saving')"><span class="ico">📈</span>Saving</button>
+  <button role="tab" data-v="parents" onclick="askPin()"><span class="ico">🔑</span>Parents</button>
 </nav>
 <dialog id="dlg"><div class="dlg" id="dlgBody"></div></dialog>
 <script>
 "use strict";
-const DAY=86400000, KEY="challenges_v2";
+const DAY=86400000, KEY="challenges_v2", FEEDKEY="challenges_feed";
+const AUTO_MS=6*3600*1000, RETRY_MS=30*60*1000;
 
 const RATES={
   juna:[2,2,2,2, 4,4,4,4, 5,5,5,5, 6,6,6,6, 8,8,8,8],
@@ -157,43 +165,69 @@ const BOOKS={juna:[4,7,10,14], artus:[2,2,2,2,2]};
 const COMPANIES=["Alphabet","Microsoft","SpaceX","NVIDIA","Apple","Amazon","TSMC","Meta","Tesla"];
 const TICKER={Alphabet:"GOOGL",Microsoft:"MSFT",SpaceX:"SPCX",NVIDIA:"NVDA",Apple:"AAPL",
   Amazon:"AMZN",TSMC:"TSM",Meta:"META",Tesla:"TSLA"};
-const INSTR={btc:{name:"Bitcoin",icon:"₿"}, etf:{name:"Welt-ETF",icon:"🌍"}, basket:{name:"Zukunfts-Korb",icon:"🚀"}};
+const INSTR={
+  btc:{name:"Bitcoin",icon:"₿",risk:3,
+    short:"Digital money. No company behind it.",
+    why:"Bitcoin has grown a lot over the years, and when it moves up it can move up fast.",
+    care:"It is the wildest of the three. Losing a third of its value in a few months has happened many times, and it can happen again."},
+  etf:{name:"World fund",icon:"🌍",risk:1,
+    short:"A tiny slice of about 1,500 big companies all over the world.",
+    why:"When one company has a bad year, the other 1,499 carry you. It moves up more calmly and more often than it moves down.",
+    care:"It grows slowly. In a bad year the whole world market can still drop by a fifth."},
+  basket:{name:"Future basket",icon:"🚀",risk:2,
+    short:"Nine companies you already know, counted equally.",
+    why:"These companies build a lot of the things people want next. If they do well, the basket does better than the world fund.",
+    care:"Nine companies is not many. If two of them stumble badly, you feel it."}
+};
 
 function slot(sym){ return {px:null, base:null, sym:sym||null}; }
 function fresh(){
   return {
-    v:2, fx:17500, pin:"1234",
-    feed:{sheet:"", updated:null, log:""},
+    v:3, fx:17500, fxDate:null, pin:"1234",
+    feed:{sheet:"", updated:null, tried:null, log:"", auto:true},
     prices:{ btc:slot("BTC"), etf:slot("URTH"),
       basket:Object.fromEntries(COMPANIES.map(c=>[c, slot(TICKER[c])])) },
     kids:{
       juna:{ name:"Juna", start:"2026-08-31", weeks:20, minDays:5, minutes:20,
         bonusMinutes:0, bonusDays:0, bonusEur:0,
         allowance:20, allowanceEvery:"month",
-        bookMin:"ab 200 Seiten, selbst ausgesucht", wordRate:0.10, wordCap:1,
+        bookMin:"200 pages or more, your own pick", wordRate:0.10, wordCap:1,
         milestones:[
-          {id:"h3",label:"Handstand 3 Sekunden (3x an einem Tag)",eur:20,done:null},
-          {id:"h10",label:"Handstand 10 Sekunden",eur:80,done:null},
-          {id:"hw",label:"10 Schritte auf den Händen",eur:50,done:null}],
-        days:{}, books:[], words:{}, spend:[], deposits:[], payouts:[] },
+          {id:"h3",label:"Handstand for 3 seconds (3x in one day)",eur:20,done:null},
+          {id:"h10",label:"Handstand for 10 seconds",eur:80,done:null},
+          {id:"hw",label:"10 steps on your hands",eur:50,done:null}],
+        days:{}, books:[], words:{}, spend:[], deposits:[], payouts:[], extras:[] },
       artus:{ name:"Artus", start:"2026-08-31", weeks:10, minDays:5, minutes:10,
         bonusMinutes:15, bonusDays:4, bonusEur:1,
         allowance:2, allowanceEvery:"week",
-        bookMin:"Erstlesebuch, alle 2 Wochen eins", wordRate:0, wordCap:0,
+        bookMin:"An early reader, one every two weeks", wordRate:0, wordCap:0,
         milestones:[],
-        days:{}, books:[], words:{}, spend:[], deposits:[], payouts:[] }
+        days:{}, books:[], words:{}, spend:[], deposits:[], payouts:[], extras:[] }
     }
   };
 }
 
-let S=load(), KID="juna", VIEW="heute", CUR="EUR", BUY="basket";
+/* labels that were German before v3, swapped only when still the old default */
+const DE2EN={
+  "Handstand 3 Sekunden (3x an einem Tag)":"Handstand for 3 seconds (3x in one day)",
+  "Handstand 10 Sekunden":"Handstand for 10 seconds",
+  "10 Schritte auf den Händen":"10 steps on your hands",
+  "ab 200 Seiten, selbst ausgesucht":"200 pages or more, your own pick",
+  "Erstlesebuch, alle 2 Wochen eins":"An early reader, one every two weeks"
+};
+
+let S=load(), KID="juna", VIEW="today", CUR="EUR", BUY="basket";
 
 function load(){
   try{
     const raw=localStorage.getItem(KEY)||localStorage.getItem("challenges_v1");
-    if(!raw) return fresh();
+    if(!raw){ const o=fresh(); o.feed.sheet=localStorage.getItem(FEEDKEY)||""; return o; }
     const p=JSON.parse(raw), f=fresh(), out=Object.assign({},f,p);
     out.feed=Object.assign({},f.feed,p.feed||{});
+    /* the sheet link also lives in its own key, so a partial import or a bad
+       merge can never silently unlink the price feed */
+    const mirror=localStorage.getItem(FEEDKEY)||"";
+    if(!out.feed.sheet && mirror) out.feed.sheet=mirror;
     out.prices=Object.assign({},f.prices);
     for(const k of ["btc","etf"]) if(p.prices&&typeof p.prices[k]==="object"&&p.prices[k].px!==undefined) out.prices[k]=p.prices[k];
     out.prices.basket=Object.assign({},f.prices.basket);
@@ -207,29 +241,44 @@ function load(){
       const d={};
       for(const key in (kid.days||{})){ const val=kid.days[key]; d[key]= val===true? kid.minutes : Number(val)||0; }
       kid.days=d;
-      for(const dep of (kid.deposits||[])) if(dep.px===undefined) dep.px=dep.idx||100;
+      if(!Array.isArray(kid.extras)) kid.extras=[];
+      if(!Array.isArray(kid.deposits)) kid.deposits=[];
+      for(const dep of kid.deposits){
+        if(dep.px===undefined) dep.px=dep.idx||100;
+        if(dep.id===undefined) dep.id="d"+Math.random().toString(36).slice(2);
+      }
+      if(DE2EN[kid.bookMin]) kid.bookMin=DE2EN[kid.bookMin];
+      kid.milestones=(kid.milestones||[]).map(m=>DE2EN[m.label]? Object.assign({},m,{label:DE2EN[m.label]}) : m);
       out.kids[k]=kid;
     }
+    out.v=3;
     return out;
   }catch(e){ return fresh(); }
 }
-function save(){ try{ localStorage.setItem(KEY,JSON.stringify(S)); }
-  catch(e){ alert("Speichern hat nicht geklappt."); } }
+function save(){
+  try{
+    localStorage.setItem(KEY,JSON.stringify(S));
+    localStorage.setItem(FEEDKEY,S.feed.sheet||"");
+  }catch(e){ alert("Could not save."); }
+}
 
 const iso=d=>{const x=new Date(d);return x.getFullYear()+"-"+String(x.getMonth()+1).padStart(2,"0")+"-"+String(x.getDate()).padStart(2,"0");};
 function monday(d){const x=new Date(d);x.setHours(12,0,0,0);const g=(x.getDay()+6)%7;x.setDate(x.getDate()-g);return x;}
 function today(){const x=new Date();x.setHours(12,0,0,0);return x;}
 function addD(d,n){const x=new Date(d);x.setDate(x.getDate()+n);return x;}
-const WD=["Mo","Di","Mi","Do","Fr","Sa","So"];
+const WD=["Mon","Tue","Wed","Thu","Fri","Sat","Sun"];
 const K=k=>S.kids[k||KID];
 function weekIndex(k,d){ return Math.floor((monday(d)-monday(new Date(K(k).start+"T12:00:00")))/(7*DAY)); }
-function dshort(d){ const x=new Date(d+"T12:00:00"); return x.getDate()+"."+(x.getMonth()+1)+"."; }
+function dshort(d){ const x=new Date(d+"T12:00:00"); return x.toLocaleDateString("en-GB",{day:"numeric",month:"short"}); }
+function esc(s){ return String(s==null?"":s).replace(/&/g,"&amp;").replace(/</g,"&lt;").replace(/>/g,"&gt;").replace(/"/g,"&quot;"); }
 
 function fmt(eur){
-  if(CUR==="IDR") return (Math.round(eur*S.fx/100)*100).toLocaleString("de-DE")+" Rp";
-  return (Math.round(eur*100)/100).toFixed(2).replace(".",",").replace(/,00$/,"")+" €";
+  const neg=eur<-0.0001, a=Math.abs(eur);
+  if(CUR==="IDR") return (neg?"−":"")+"Rp "+(Math.round(a*S.fx/100)*100).toLocaleString("en-US");
+  return (neg?"−":"")+"€"+(Math.round(a*100)/100).toFixed(2).replace(/\.00$/,"");
 }
-function pct(n){ return (n>=0?"+":"−")+Math.abs(n).toFixed(1).replace(".",",")+" %"; }
+function idr(n){ return "Rp "+Math.round(n).toLocaleString("en-US"); }
+function pct(n){ return (n>=0?"+":"−")+Math.abs(n).toFixed(1)+"%"; }
 
 /* ---- prices ---- */
 function level(inst){
@@ -279,11 +328,16 @@ function sheetUrls(raw){
   return ["https://docs.google.com/spreadsheets/d/"+id+"/gviz/tq?tqx=out:csv",
           "https://docs.google.com/spreadsheets/d/e/"+id+"/pub?output=csv"];
 }
-async function fetchPrices(){
-  const log=[]; let map=null;
+function fetchT(url,ms){
+  const ctl=new AbortController(), t=setTimeout(()=>ctl.abort(),ms||9000);
+  return fetch(url,{cache:"no-store",signal:ctl.signal}).finally(()=>clearTimeout(t));
+}
+async function fetchPrices(silent){
+  const log=[]; let map=null, ok=false;
+  S.feed.tried=new Date().toISOString();
   for(const url of sheetUrls(S.feed.sheet)){
     try{
-      const r=await fetch(url,{cache:"no-store"});
+      const r=await fetchT(url);
       if(!r.ok) throw new Error(r.status);
       const rows=csvRows(await r.text()); const m={};
       for(const row of rows){
@@ -294,11 +348,11 @@ async function fetchPrices(){
       if(Object.keys(m).length){ map=m; break; }
     }catch(e){ /* try the next url shape */ }
   }
-  if(!S.feed.sheet) log.push("Keine Tabelle hinterlegt.");
-  else if(!map) log.push("Tabelle ✗ — nicht erreichbar oder nicht freigegeben.");
+  if(!S.feed.sheet) log.push("No sheet linked.");
+  else if(!map) log.push("Sheet ✗ — not reachable or not shared.");
   else{
     let n=0;
-    if(map.euridr){ S.fx=Math.round(map.euridr); log.push("Wechselkurs ✓ 1 € = "+S.fx.toLocaleString("de-DE")+" Rp"); }
+    if(map.euridr){ setFx(map.euridr); log.push("Exchange rate ✓ €1 = "+idr(S.fx)); }
     if(map.btc){ setPx(S.prices.btc,map.btc); n++; }
     if(map.etf){ setPx(S.prices.etf,map.etf); n++; }
     const miss=[];
@@ -306,28 +360,53 @@ async function fetchPrices(){
       const v=map[c.toLowerCase()];
       if(v){ setPx(S.prices.basket[c],v); n++; } else miss.push(c);
     }
-    log.push("Tabelle ✓ "+n+" Kurse übernommen"+(miss.length?" — fehlt: "+miss.join(", "):""));
+    if(n) ok=true;
+    log.push("Sheet ✓ "+n+" prices taken"+(miss.length?" — missing: "+miss.join(", "):""));
   }
   if(!map || !map.btc){
     try{
-      const r=await fetch("https://api.coinbase.com/v2/prices/BTC-EUR/spot");
+      const r=await fetchT("https://api.coinbase.com/v2/prices/BTC-EUR/spot");
       const j=await r.json(); const p=Number(j&&j.data&&j.data.amount);
-      if(p>0){ setPx(S.prices.btc,p); log.push("Bitcoin ✓ "+Math.round(p).toLocaleString("de-DE")+" € (Coinbase)"); }
+      if(p>0){ setPx(S.prices.btc,p); ok=true; log.push("Bitcoin ✓ €"+Math.round(p).toLocaleString("en-US")+" (Coinbase)"); }
       else log.push("Bitcoin ✗");
-    }catch(e){ log.push("Bitcoin ✗ — alter Kurs bleibt"); }
+    }catch(e){ log.push("Bitcoin ✗ — old price kept"); }
   }
   if(!map || !map.euridr){
     try{
-      const r=await fetch("https://api.frankfurter.app/latest?from=EUR&to=IDR");
+      const r=await fetchT("https://api.frankfurter.app/latest?from=EUR&to=IDR");
       const j=await r.json();
-      if(j&&j.rates&&j.rates.IDR){ S.fx=Math.round(j.rates.IDR); log.push("Wechselkurs ✓ (EZB)"); }
-    }catch(e){ log.push("Wechselkurs ✗ — alter Kurs bleibt"); }
+      if(j&&j.rates&&j.rates.IDR){ setFx(j.rates.IDR); ok=true; log.push("Exchange rate ✓ €1 = "+idr(S.fx)+" (ECB)"); }
+      else log.push("Exchange rate ✗ — old rate kept");
+    }catch(e){ log.push("Exchange rate ✗ — old rate kept"); }
   }
-  S.feed.updated=new Date().toISOString();
+  if(ok) S.feed.updated=new Date().toISOString();
   S.feed.log=log.join("\n");
-  save(); render();
+  save();
+  if(!silent || !typing()) render();
+  return ok;
 }
 function setPx(sl,px){ sl.px=px; if(!sl.base) sl.base=px; }
+function setFx(v){ const n=Math.round(v); if(n>0){ S.fx=n; S.fxDate=new Date().toISOString(); } }
+function typing(){
+  const a=document.activeElement;
+  return !!(a && (a.tagName==="INPUT"||a.tagName==="SELECT"||a.tagName==="TEXTAREA"));
+}
+/* Prices refresh themselves in the background, never on the critical path: the
+   first paint has already happened, failures are silent, old prices stay put. */
+function autoRefresh(){
+  if(S.feed.auto===false) return;
+  if(navigator.onLine===false) return;
+  const now=Date.now();
+  const upd=S.feed.updated? new Date(S.feed.updated).getTime():0;
+  const tri=S.feed.tried? new Date(S.feed.tried).getTime():0;
+  if(now-upd < AUTO_MS) return;
+  if(now-tri < RETRY_MS) return;
+  Promise.resolve().then(()=>fetchPrices(true)).catch(()=>{});
+}
+function setSheet(v){
+  S.feed.sheet=(v||"").trim();
+  save();
+}
 
 /* ---- engine ---- */
 function weekStats(k){
@@ -349,6 +428,11 @@ function weekStats(k){
   }
   return {weeks:out, qualified:rank, nowWi};
 }
+function wordFull(kid){ return kid.wordRate? Math.round(kid.wordCap/kid.wordRate) : 0; }
+function wordEditable(k,i){
+  const nowWi=weekIndex(k,today());
+  return i===nowWi || i===nowWi-1;
+}
 function calc(k){
   const kid=K(k), ws=weekStats(k);
   const weekEur=ws.weeks.reduce((s,w)=>s+w.rate,0);
@@ -361,9 +445,15 @@ function calc(k){
 
   const bookEur=kid.books.reduce((s,b,i)=>s+(BOOKS[k][i]||0),0);
   const bookLeft=BOOKS[k].slice(kid.books.length).reduce((a,b)=>a+b,0);
-  let wordEur=0;
-  for(const key in kid.words) wordEur+=Math.min(kid.words[key]*kid.wordRate,kid.wordCap);
-  const wordLeft=kid.wordRate? remain*kid.wordCap : 0;
+  let wordEur=0, wordLeft=0, wordWeeks=0;
+  if(kid.wordRate){
+    for(const w of ws.weeks){
+      const got=Math.min((kid.words["w"+w.i]||0)*kid.wordRate, kid.wordCap);
+      wordEur+=got;
+      if(got>=kid.wordCap-0.001) wordWeeks++;
+      if(!w.past||w.current) wordLeft+=kid.wordCap-got;
+    }
+  }
   const msEur=kid.milestones.filter(m=>m.done).reduce((s,m)=>s+m.eur,0);
   const msLeft=kid.milestones.filter(m=>!m.done).reduce((s,m)=>s+m.eur,0);
 
@@ -376,18 +466,28 @@ function calc(k){
     : (t.getFullYear()-st.getFullYear())*12+(t.getMonth()-st.getMonth())+1;
   const allowance=Math.max(0,periods)*kid.allowance;
   const spent=kid.spend.reduce((s,x)=>s+x.eur,0);
+  const extraEur=(kid.extras||[]).reduce((s,x)=>s+x.eur,0);
   const paidOut=kid.payouts.reduce((s,x)=>s+x.eur,0);
   const inv=invested(k);
-  const cash=earned+allowance+inv.matchPaid+inv.proceeds-spent-inv.principalOpen-paidOut;
-  return {ws,weekEur,bonusEur,bonusLeft,futureWeek,bookEur,bookLeft,wordEur,wordLeft,
-    msEur,msLeft,earned,open,allowance,spent,paidOut,cash,remain,inv};
+  /* every euro ever invested has left the balance (principalAll); a sale brings
+     back proceeds. Subtracting only the open principal would hand back the
+     stake for free on every sale. */
+  const cash=earned+allowance+extraEur+inv.matchPaid+inv.proceeds-spent-inv.principalAll-paidOut;
+  return {ws,weekEur,bonusEur,bonusLeft,futureWeek,bookEur,bookLeft,wordEur,wordLeft,wordWeeks,
+    msEur,msLeft,earned,open,allowance,extraEur,spent,paidOut,cash,remain,inv};
 }
 function invested(k){
   const kid=K(k), t=Date.now();
-  let principalOpen=0,value=0,matchPaid=0,matchOpen=0,proceeds=0; const open=[];
+  let principalOpen=0,principalAll=0,value=0,matchPaid=0,matchOpen=0,proceeds=0; const open=[],sold=[];
   for(const d of kid.deposits){
     const vested = t-new Date(d.date+"T12:00:00").getTime() >= 365*DAY;
-    if(d.sold){ proceeds+=d.soldValue||0; if(d.matchClaimed) matchPaid+=d.eur*0.5; continue; }
+    principalAll+=d.eur;
+    if(d.sold){
+      proceeds+=d.soldValue||0;
+      if(d.matchClaimed) matchPaid+=d.eur*0.5;
+      sold.push(d);
+      continue;
+    }
     const now=level(d.instrument)||d.px;
     const val=d.eur*(now/d.px);
     principalOpen+=d.eur; value+=val;
@@ -395,7 +495,7 @@ function invested(k){
     open.push(Object.assign({},d,{value:val,vested,
       daysLeft:Math.max(0,Math.ceil((new Date(d.date+"T12:00:00").getTime()+365*DAY-t)/DAY))}));
   }
-  return {principalOpen,value,matchPaid,matchOpen,proceeds,open};
+  return {principalOpen,principalAll,value,matchPaid,matchOpen,proceeds,open,sold};
 }
 
 /* ---- views ---- */
@@ -408,18 +508,18 @@ function render(){
   tabArtus.setAttribute("aria-selected",KID==="artus");
   document.querySelectorAll("nav button").forEach(b=>b.setAttribute("aria-selected",b.dataset.v===VIEW));
   const c=calc(KID);
-  view.innerHTML = VIEW==="heute"?vHeute(c): VIEW==="ziele"?vZiele(c): VIEW==="geld"?vGeld(c)
-    : VIEW==="sparen"?vSparen(c): vEltern(c);
-  foot.innerHTML='1 € = '+S.fx.toLocaleString("de-DE")+' Rp · <a href="#" onclick="toggleCur();return false;" style="color:inherit">in '+(CUR==="EUR"?"Rupiah":"Euro")+' zeigen</a>';
+  view.innerHTML = VIEW==="today"?vToday(c): VIEW==="goals"?vGoals(c): VIEW==="money"?vMoney(c)
+    : VIEW==="saving"?vSaving(c): vParents(c);
+  foot.innerHTML='€1 = '+idr(S.fx)+' · <a href="#" onclick="toggleCur();return false;" style="color:inherit">show in '+(CUR==="EUR"?"rupiah":"euro")+'</a>';
 }
 function hero(c){
   const max=c.earned+c.open, pe=max?c.earned/max*100:0, po=max?c.open/max*100:0;
-  return '<div class="hero"><h1>Bis jetzt verdient</h1>'+
+  return '<div class="hero"><h1>Earned so far</h1>'+
    '<div class="big num">'+fmt(c.earned)+'</div>'+
    '<div class="bar"><i class="b1" style="width:'+pe+'%"></i><i class="b2" style="width:'+po+'%"></i></div>'+
-   '<div class="legend"><div><span class="dot" style="background:var(--gold)"></span>verdient<b class="num">'+fmt(c.earned)+'</b></div>'+
-   '<div><span class="dot" style="background:var(--accent);opacity:.4"></span>noch möglich<b class="num">'+fmt(c.open)+'</b></div>'+
-   '<div style="text-align:right">insgesamt<b class="num">'+fmt(max)+'</b></div></div></div>';
+   '<div class="legend"><div><span class="dot" style="background:var(--gold)"></span>earned<b class="num">'+fmt(c.earned)+'</b></div>'+
+   '<div><span class="dot" style="background:var(--accent);opacity:.4"></span>still possible<b class="num">'+fmt(c.open)+'</b></div>'+
+   '<div style="text-align:right">in total<b class="num">'+fmt(max)+'</b></div></div></div>';
 }
 function editableDay(key){
   const diff=Math.round((today()-new Date(key+"T12:00:00"))/DAY);
@@ -442,41 +542,41 @@ function weekRow(m0,label){
     const cls=(kid.bonusMinutes&&mm>=kid.bonusMinutes)?"plus":(mm>=kid.minutes?"on":"");
     return '<button class="wd '+cls+' '+(key===tk?"today":"")+' '+(ed?"edit":"lock")+'" '+
       (ed?'onclick="cycleDay(\''+key+'\')"':'disabled')+'><i></i>'+w+
-      '<span class="dnum">'+d.getDate()+'.</span></button>';
+      '<span class="dnum">'+d.getDate()+'</span></button>';
   }).join("");
   return '<div class="weeklabel">'+label+'</div><div class="weekdots">'+cells+'</div>';
 }
-function vHeute(c){
+function vToday(c){
   const kid=K(), t=today(), tk=iso(t), m=kid.days[tk]||0, m0=monday(t);
-  const dots=weekRow(addD(m0,-7),"letzte Woche")+weekRow(m0,"diese Woche");
+  const dots=weekRow(addD(m0,-7),"last week")+weekRow(m0,"this week");
   let stampHtml;
   if(kid.bonusMinutes){
     stampHtml='<div class="stamps">'+
       '<button class="stamp '+(m>=kid.minutes&&m<kid.bonusMinutes?"done":"")+'" onclick="logDay('+kid.minutes+')">'+
-        kid.minutes+' Minuten<span class="mins">laut vorlesen</span></button>'+
+        kid.minutes+' minutes<span class="mins">read out loud</span></button>'+
       '<button class="stamp bonus '+(m>=kid.bonusMinutes?"done":"")+'" onclick="logDay('+kid.bonusMinutes+')">'+
-        kid.bonusMinutes+' Minuten<span class="mins">extra lang</span></button></div>';
+        kid.bonusMinutes+' minutes<span class="mins">extra long</span></button></div>';
   } else {
     stampHtml='<button class="stamp '+(m>=kid.minutes?"done":"")+'" onclick="logDay('+kid.minutes+')">'+
-      (m>=kid.minutes?"✓ Heute gelesen":"Heute gelesen?")+'<span class="mins">'+kid.minutes+' Minuten</span></button>';
+      (m>=kid.minutes?"✓ Read today":"Read today?")+'<span class="mins">'+kid.minutes+' minutes</span></button>';
   }
   const wi=weekIndex(KID,t), wk=c.ws.weeks[wi];
   let msg;
-  if(!wk) msg="Diese Woche gehört nicht zur Challenge.";
+  if(!wk) msg="This week is not part of the challenge.";
   else{
     const need=Math.max(0,kid.minDays-wk.days);
-    msg = wk.done? "Woche geschafft — "+fmt(RATES[KID][wk.rank-1]||0)+" verdient."
-      : "Noch "+need+(need===1?" Tag":" Tage")+" bis diese Woche zählt.";
+    msg = wk.done? "Week done — "+fmt(RATES[KID][wk.rank-1]||0)+" earned."
+      : need+(need===1?" more day":" more days")+" until this week counts.";
     if(kid.bonusMinutes){
       const nb=Math.max(0,kid.bonusDays-wk.bonusDays);
-      msg += wk.bonus? " Extra-Bonus von "+fmt(kid.bonusEur)+" ist auch drin."
-        : " Noch "+nb+"x "+kid.bonusMinutes+" Minuten für "+fmt(kid.bonusEur)+" extra.";
+      msg += wk.bonus? " The extra bonus of "+fmt(kid.bonusEur)+" is yours too."
+        : " "+nb+"x "+kid.bonusMinutes+" minutes to go for "+fmt(kid.bonusEur)+" extra.";
     }
   }
-  return hero(c)+'<section><h2>Heute</h2><div class="today">'+stampHtml+
+  return hero(c)+'<section><h2>Today</h2><div class="today">'+stampHtml+
     dots+'<p class="sub" style="margin:12px 0 0">'+msg+'</p>'+
-    '<p class="sub" style="margin:8px 0 0;opacity:.75">Vergessen? Tippe auf einen Tag der letzten 7 Tage, um ihn nachzutragen'+
-    (kid.bonusMinutes?' — nochmal tippen für '+kid.bonusMinutes+' Minuten, ein drittes Mal löscht ihn.':' — nochmal tippen löscht ihn.')+'</p>'+
+    '<p class="sub" style="margin:8px 0 0;opacity:.75">Forgot one? Tap any day from the last 7 days to add it'+
+    (kid.bonusMinutes?' — tap again for '+kid.bonusMinutes+' minutes, a third tap clears it.':' — tap again to clear it.')+'</p>'+
     '</div></section>'+stairs(c);
 }
 function stairs(c){
@@ -486,62 +586,91 @@ function stairs(c){
     const cls=w.done?"won":(w.past?"miss":"");
     return '<div class="st '+cls+' '+(w.current?"now":"")+'"><i style="height:'+h+'%"></i></div>';
   }).join("");
-  return '<section><h2>Die Wochen-Treppe</h2><div class="card"><div class="stairs">'+bars+'</div>'+
-   '<div class="stairlabels"><span>Woche 1 · '+fmt(RATES[KID][0])+'</span><span>Woche '+K().weeks+' · '+fmt(RATES[KID][K().weeks-1])+'</span></div>'+
-   '<p class="sub" style="margin:10px 0 0">'+c.ws.qualified+' von '+K().weeks+
-   ' Wochen geschafft. Verpasste Wochen kosten nichts — es dauert dann nur länger bis zur höchsten Stufe.</p></div></section>';
+  return '<section><h2>The weekly staircase</h2><div class="card"><div class="stairs">'+bars+'</div>'+
+   '<div class="stairlabels"><span>Week 1 · '+fmt(RATES[KID][0])+'</span><span>Week '+K().weeks+' · '+fmt(RATES[KID][K().weeks-1])+'</span></div>'+
+   '<p class="sub" style="margin:10px 0 0">'+c.ws.qualified+' of '+K().weeks+
+   ' weeks done. A missed week costs you nothing — it only takes longer to reach the top step.</p></div></section>';
 }
-function vZiele(c){
+function vGoals(c){
   const kid=K();
   const ms=kid.milestones.length? '<section><h2>Sport</h2><div class="card">'+
     kid.milestones.map(m=>'<div class="row"><div class="check '+(m.done?"on":"")+'"></div>'+
-    '<div class="grow"><div>'+m.label+'</div>'+(m.done?'<div class="sub">geschafft am '+dshort(m.done)+'</div>':'')+
+    '<div class="grow"><div>'+esc(m.label)+'</div>'+(m.done?'<div class="sub">done on '+dshort(m.done)+'</div>':'')+
     '</div><div class="money">'+fmt(m.eur)+'</div></div>').join("")+'</div></section>' : "";
   const bk=BOOKS[KID].map((eur,i)=>{
     const b=kid.books[i];
     return '<div class="row"><div class="check '+(b?"on":"")+'"></div><div class="grow"><div>'+
-      (b?b.title:(i+1)+". Buch")+'</div><div class="sub">'+(b?dshort(b.date):kid.bookMin)+
+      (b?esc(b.title):"Book "+(i+1))+'</div><div class="sub">'+(b?dshort(b.date):esc(kid.bookMin))+
       '</div></div><div class="money">'+fmt(eur)+'</div></div>';
   }).join("");
-  const bonus = kid.bonusMinutes? '<section><h2>Extra-Bonus</h2><div class="card"><div class="row">'+
-    '<div class="grow"><div>'+kid.bonusDays+'x '+kid.bonusMinutes+' Minuten in einer Woche</div>'+
-    '<div class="sub">'+c.ws.weeks.filter(w=>w.bonus).length+' Wochen mit Bonus bisher</div></div>'+
+  const bonus = kid.bonusMinutes? '<section><h2>Extra bonus</h2><div class="card"><div class="row">'+
+    '<div class="grow"><div>'+kid.bonusDays+'x '+kid.bonusMinutes+' minutes in one week</div>'+
+    '<div class="sub">'+c.ws.weeks.filter(w=>w.bonus).length+' weeks with the bonus so far</div></div>'+
     '<div class="money">'+fmt(c.bonusEur)+'</div></div></div></section>' : "";
-  const words = kid.wordRate? '<section><h2>Unbekannte Wörter</h2><div class="card"><div class="row">'+
-    '<div class="grow"><div>'+Object.values(kid.words).reduce((a,b)=>a+b,0)+' Wörter angestrichen</div>'+
-    '<div class="sub">10 Cent pro Wort, höchstens '+fmt(kid.wordCap)+' pro Woche</div></div>'+
-    '<div class="money">'+fmt(c.wordEur)+'</div></div></div></section>' : "";
-  return hero(c)+ms+'<section><h2>Bücher</h2><div class="card">'+bk+'</div></section>'+bonus+words;
+  let words="";
+  if(kid.wordRate){
+    const full=wordFull(kid), nowWi=weekIndex(KID,today());
+    const rows=[nowWi,nowWi-1].filter(i=>i>=0&&i<kid.weeks).map(i=>{
+      const got=(kid.words["w"+i]||0)>=full, ed=wordEditable(KID,i);
+      return '<div class="row"><button class="check '+(got?"on":"")+'" '+(ed?"":"disabled ")+
+        'onclick="toggleWordWeek('+i+')" aria-pressed="'+got+'"></button>'+
+        '<div class="grow"><div>'+full+' new words marked</div>'+
+        '<div class="sub">'+(i===nowWi?"this week":"last week")+'</div></div>'+
+        '<div class="money">'+fmt(kid.wordCap)+'</div></div>';
+    }).join("");
+    words='<section><h2>New words</h2><div class="card">'+
+      (rows||'<p class="sub" style="margin:0">This week is not part of the challenge.</p>')+
+      '<div class="row"><div class="grow"><div>Weeks with '+full+' words</div>'+
+      '<div class="sub">'+c.wordWeeks+' so far</div></div><div class="money">'+fmt(c.wordEur)+'</div></div>'+
+      '<p class="sub" style="margin:12px 0 0">Underline a word you did not know while you read. '+
+      'Once you have '+full+' of them in a week, tick the box and you get '+fmt(kid.wordCap)+'.</p>'+
+      '</div></section>';
+  }
+  return hero(c)+ms+'<section><h2>Books</h2><div class="card">'+bk+'</div></section>'+bonus+words;
 }
-function vGeld(c){
+function vMoney(c){
   const kid=K();
-  const sp=kid.spend.slice().reverse().slice(0,12).map(x=>
-    '<div class="row"><div class="grow"><div>'+(x.label||"Ausgabe")+'</div><div class="sub">'+dshort(x.date)+
-    '</div></div><div class="money">− '+fmt(x.eur)+'</div></div>').join("")
-    || '<p class="sub" style="margin:0">Noch nichts ausgegeben.</p>';
-  return '<div class="hero"><h1>Dein Guthaben</h1><div class="big num" style="color:'+(c.cash<0?"var(--warn)":"inherit")+'">'+fmt(c.cash)+'</div>'+
-   '<div class="legend" style="margin-top:14px"><div>eingenommen<b class="num">'+fmt(c.earned+c.allowance+c.inv.matchPaid+c.inv.proceeds)+'</b></div>'+
-   '<div>ausgegeben<b class="num">'+fmt(c.spent)+'</b></div>'+
-   '<div style="text-align:right">angelegt<b class="num">'+fmt(c.inv.principalOpen)+'</b></div></div></div>'+
-   '<section><h2>Woher das Geld kommt</h2><div class="card"><table>'+
-   '<tr><td>Lesen, Woche für Woche</td><td>'+fmt(c.weekEur)+'</td></tr>'+
-   (kid.bonusMinutes?'<tr><td>Extra-Bonus</td><td>'+fmt(c.bonusEur)+'</td></tr>':'')+
-   '<tr><td>Bücher</td><td>'+fmt(c.bookEur)+'</td></tr>'+
-   (kid.wordRate?'<tr><td>Unbekannte Wörter</td><td>'+fmt(c.wordEur)+'</td></tr>':'')+
-   (kid.milestones.length?'<tr><td>Sport-Ziele</td><td>'+fmt(c.msEur)+'</td></tr>':'')+
-   '<tr><td>Taschengeld</td><td>'+fmt(c.allowance)+'</td></tr>'+
-   (c.inv.matchPaid?'<tr><td>Spar-Bonus von Papa</td><td>'+fmt(c.inv.matchPaid)+'</td></tr>':'')+
-   (c.paidOut?'<tr><td>schon ausgezahlt</td><td>− '+fmt(c.paidOut)+'</td></tr>':'')+
+  const items=[];
+  for(const x of kid.spend) items.push({date:x.date,label:x.label||"Purchase",eur:-x.eur,
+    note:x.idr? idr(x.idr)+" at €1 = "+idr(x.fx||S.fx) : ""});
+  for(const x of (kid.extras||[])) items.push({date:x.date,label:x.label||"Extra money",eur:x.eur,
+    note:x.idr? idr(x.idr)+" at €1 = "+idr(x.fx||S.fx) : "extra"});
+  items.sort((a,b)=> a.date<b.date?1:a.date>b.date?-1:0);
+  const list=items.slice(0,14).map(x=>
+    '<div class="row"><div class="grow"><div>'+esc(x.label)+'</div><div class="sub">'+dshort(x.date)+
+    (x.note?" · "+x.note:"")+'</div></div><div class="money" style="'+(x.eur>0?"color:var(--gold)":"")+'">'+
+    (x.eur>0?"+ ":"− ")+fmt(Math.abs(x.eur))+'</div></div>').join("")
+    || '<p class="sub" style="margin:0">Nothing spent yet.</p>';
+  return '<div class="hero"><h1>Your balance</h1><div class="big num" style="color:'+(c.cash<0?"var(--warn)":"inherit")+'">'+fmt(c.cash)+'</div>'+
+   '<div class="legend" style="margin-top:14px"><div>came in<b class="num">'+fmt(c.earned+c.allowance+c.extraEur+c.inv.matchPaid+c.inv.proceeds)+'</b></div>'+
+   '<div>spent<b class="num">'+fmt(c.spent)+'</b></div>'+
+   '<div style="text-align:right">invested<b class="num">'+fmt(c.inv.principalOpen)+'</b></div></div></div>'+
+   '<section><h2>Where the money comes from</h2><div class="card"><table>'+
+   '<tr><td>Reading, week by week</td><td>'+fmt(c.weekEur)+'</td></tr>'+
+   (kid.bonusMinutes?'<tr><td>Extra bonus</td><td>'+fmt(c.bonusEur)+'</td></tr>':'')+
+   '<tr><td>Books</td><td>'+fmt(c.bookEur)+'</td></tr>'+
+   (kid.wordRate?'<tr><td>New words</td><td>'+fmt(c.wordEur)+'</td></tr>':'')+
+   (kid.milestones.length?'<tr><td>Sport goals</td><td>'+fmt(c.msEur)+'</td></tr>':'')+
+   '<tr><td>Pocket money</td><td>'+fmt(c.allowance)+'</td></tr>'+
+   (c.extraEur?'<tr><td>Gifts and extras</td><td>'+fmt(c.extraEur)+'</td></tr>':'')+
+   (c.inv.matchPaid?'<tr><td>Saving bonus from Papa</td><td>'+fmt(c.inv.matchPaid)+'</td></tr>':'')+
+   (c.inv.proceeds?'<tr><td>Investments sold</td><td>'+fmt(c.inv.proceeds)+'</td></tr>':'')+
+   (c.paidOut?'<tr><td>already paid out</td><td>− '+fmt(c.paidOut)+'</td></tr>':'')+
    '</table></div></section>'+
-   '<section><h2>Ausgaben</h2><div class="card">'+sp+
-   '<div style="margin-top:14px"><button class="btn ghost" onclick="addSpend()">Ausgabe eintragen</button></div></div></section>';
+   '<section><h2>Spending and extras</h2><div class="card">'+list+
+   '<div style="margin-top:14px;display:flex;gap:8px;flex-wrap:wrap">'+
+   '<button class="btn ghost" onclick="addSpend()">Add a purchase</button>'+
+   '<button class="btn ghost" onclick="addExtra()">Add extra money</button></div>'+
+   '<p class="sub" style="margin:10px 0 0">You can enter a purchase in rupiah. It is converted to euro at '+
+   'today\u2019s rate and keeps that rate for good.</p></div></section>';
 }
-function vSparen(c){
+function vSaving(c){
   const inv=c.inv;
   const choices=Object.keys(INSTR).map(k=>{
-    const p=levelPct(k), can=tradable(k);
-    return '<button class="choice" aria-pressed="'+(BUY===k)+'" '+(can?'':'disabled')+' onclick="BUY=\''+k+'\';render()">'+
-      INSTR[k].icon+' '+INSTR[k].name+'<span class="pct">'+(p?pct(p-100):"kein Kurs")+'</span></button>';
+    const p=levelPct(k), can=tradable(k), I=INSTR[k];
+    return '<button class="choice" aria-pressed="'+(BUY===k)+'" '+(can?"":"disabled")+' onclick="BUY=\''+k+'\';render()">'+
+      I.icon+' '+I.name+'<span class="pct">'+(p?pct(p-100):"no price")+'</span>'+
+      '<span class="risk">'+"●".repeat(I.risk)+"○".repeat(3-I.risk)+' swing</span></button>';
   }).join("");
   const chips=COMPANIES.map(cn=>{
     const s=S.prices.basket[cn], p=(s.px&&s.base)?s.px/s.base*100:100;
@@ -550,76 +679,102 @@ function vSparen(c){
   const hold=inv.open.map(d=>{
     const p=(d.value/d.eur-1)*100;
     return '<div class="holding"><div style="font-size:24px">'+INSTR[d.instrument].icon+'</div>'+
-     '<div class="grow"><div>'+INSTR[d.instrument].name+' · '+fmt(d.eur)+' angelegt</div>'+
-     '<div class="sub">'+(d.vested?"Bonus ausgezahlt":"noch "+d.daysLeft+" Tage bis zum 50 % Bonus")+'</div>'+
+     '<div class="grow"><div>'+INSTR[d.instrument].name+' · '+fmt(d.eur)+' put in</div>'+
+     '<div class="sub">'+(d.vested?"bonus earned":d.daysLeft+" days to go for the 50% bonus")+' · bought '+dshort(d.date)+'</div>'+
      '<div class="mini"><i style="width:'+(d.vested?100:Math.round((365-d.daysLeft)/365*100))+'%"></i></div></div>'+
-     '<div style="text-align:right"><div class="money">'+fmt(d.value)+'</div><div class="sub">'+pct(p)+'</div></div></div>';
-  }).join("") || '<p class="sub" style="margin:0">Noch nichts angelegt.</p>';
-  const stamp=S.feed.updated? "Kurse vom "+new Date(S.feed.updated).toLocaleString("de-DE",{day:"numeric",month:"numeric",hour:"2-digit",minute:"2-digit"}) : "Noch keine Kurse geholt";
-  return '<div class="hero"><h1>Angelegt</h1><div class="big num">'+fmt(inv.value)+'</div>'+
-   '<div class="legend" style="margin-top:14px"><div>eingezahlt<b class="num">'+fmt(inv.principalOpen)+'</b></div>'+
-   '<div>Bonus schon da<b class="num">'+fmt(inv.matchPaid)+'</b></div>'+
-   '<div style="text-align:right">Bonus kommt noch<b class="num">'+fmt(inv.matchOpen)+'</b></div></div></div>'+
-   '<section><h2>Wo willst du sparen?</h2><div class="grid3">'+choices+'</div>'+
+     '<div style="text-align:right"><div class="money">'+fmt(d.value)+'</div><div class="sub">'+pct(p)+'</div>'+
+     '<button class="btn tiny ghost" style="margin-top:6px" onclick="sellDeposit('+JSON.stringify(String(d.id))+')">Sell</button></div></div>';
+  }).join("") || '<p class="sub" style="margin:0">Nothing invested yet.</p>';
+  const soldList=inv.sold.length? '<section><h2>Already sold</h2><div class="card">'+inv.sold.slice().reverse().map(d=>{
+    const p=(d.soldValue/d.eur-1)*100;
+    return '<div class="row"><div class="grow"><div>'+INSTR[d.instrument].name+' · '+fmt(d.eur)+' put in</div>'+
+     '<div class="sub">sold '+dshort(d.soldDate||d.date)+' · '+pct(p)+(d.matchClaimed?" · bonus kept":" · bonus given up")+'</div></div>'+
+     '<div class="money">'+fmt(d.soldValue)+'</div></div>';
+  }).join("")+'</div></section>' : "";
+  const stamp=S.feed.updated? "Prices from "+new Date(S.feed.updated).toLocaleString("en-GB",{day:"numeric",month:"short",hour:"2-digit",minute:"2-digit"}) : "No prices fetched yet";
+  return '<div class="hero"><h1>Invested</h1><div class="big num">'+fmt(inv.value)+'</div>'+
+   '<div class="legend" style="margin-top:14px"><div>put in<b class="num">'+fmt(inv.principalOpen)+'</b></div>'+
+   '<div>bonus earned<b class="num">'+fmt(inv.matchPaid)+'</b></div>'+
+   '<div style="text-align:right">bonus still growing<b class="num">'+fmt(inv.matchOpen)+'</b></div></div></div>'+
+   '<section><h2>Where do you want to save?</h2><div class="grid3">'+choices+'</div>'+
+   '<p class="sub" style="margin:8px 0 0">'+INSTR[BUY].short+' '+
+   '<a href="#" onclick="explainInstrument(\''+BUY+'\');return false;" style="color:inherit">Tell me more</a></p>'+
    (BUY==="basket"?'<div class="baskets">'+chips+'</div>':'')+
    '<div style="margin-top:12px;display:flex;gap:8px;flex-wrap:wrap">'+
-   '<button class="btn" onclick="addDeposit()">Geld anlegen</button>'+
-   '<button class="btn ghost" onclick="explainMatch()">Wie geht der Bonus?</button></div>'+
+   '<button class="btn" onclick="addDeposit()">Invest money</button>'+
+   '<button class="btn ghost" onclick="explainSaving()">How does saving work?</button></div>'+
    '<p class="sub" style="margin:10px 0 0">'+stamp+'</p>'+
-   '<div class="warnbox">Wer sein Geld ein ganzes Jahr liegen lässt, bekommt <b>50 % obendrauf</b>. Wer vorher verkauft, bekommt den Bonus nicht.</div></section>'+
-   '<section><h2>Deine Anlagen</h2><div class="card">'+hold+'</div></section>';
+   '<div class="warnbox">Leave your money in for a whole year and you get <b>50% on top of what you put in</b>. '+
+   'Sell before the year is up and that bonus is gone. Prices can fall as well as rise.</div></section>'+
+   '<section><h2>Your investments</h2><div class="card">'+hold+'</div></section>'+soldList;
 }
 function askPin(){
-  dlgBody.innerHTML='<h3>Eltern</h3><label>PIN</label><input id="pinIn" type="password" inputmode="numeric" autocomplete="off">'+
-   '<div class="dlgbtns"><button class="btn ghost" onclick="dlg.close()">Abbrechen</button>'+
-   '<button class="btn" onclick="if(pinIn.value===S.pin){dlg.close();setView(\'eltern\')}else{pinIn.value=\'\';pinIn.placeholder=\'falsch\'}">Öffnen</button></div>';
+  dlgBody.innerHTML='<h3>Parents</h3><label>PIN</label><input id="pinIn" type="password" inputmode="numeric" autocomplete="off">'+
+   '<div class="dlgbtns"><button class="btn ghost" onclick="dlg.close()">Cancel</button>'+
+   '<button class="btn" onclick="if(pinIn.value===S.pin){dlg.close();setView(\'parents\')}else{pinIn.value=\'\';pinIn.placeholder=\'wrong\'}">Open</button></div>';
   dlg.showModal(); setTimeout(()=>pinIn.focus(),50);
 }
-function vEltern(c){
+function vParents(c){
   const kid=K(), inv=c.inv, settle=c.cash+inv.value;
-  const ms=kid.milestones.length? '<section><h2>Sport-Ziele</h2><div class="card">'+kid.milestones.map(m=>
-    '<div class="row"><div class="grow"><div>'+m.label+'</div><div class="sub">'+fmt(m.eur)+(m.done?" · "+dshort(m.done):"")+
+  const ms=kid.milestones.length? '<section><h2>Sport goals</h2><div class="card">'+kid.milestones.map(m=>
+    '<div class="row"><div class="grow"><div>'+esc(m.label)+'</div><div class="sub">'+fmt(m.eur)+(m.done?" · "+dshort(m.done):"")+
     '</div></div><button class="btn small '+(m.done?"ghost":"")+'" onclick="toggleMs(\''+m.id+'\')">'+
-    (m.done?"zurücknehmen":"erreicht")+'</button></div>').join("")+'</div></section>' : "";
-  return '<section><h2>Abrechnung '+kid.name+'</h2><div class="card"><table>'+
-   '<tr><td>Guthaben (Bargeld)</td><td>'+fmt(c.cash)+'</td></tr>'+
-   '<tr><td>Depotwert</td><td>'+fmt(inv.value)+'</td></tr>'+
-   '<tr><td><b>Auszahlung heute</b></td><td><b>'+fmt(settle)+'</b></td></tr>'+
-   '<tr><td class="muted">Bonus, der noch reift</td><td class="muted">'+fmt(inv.matchOpen)+'</td></tr>'+
-   '<tr><td class="muted">Noch erreichbar in der Challenge</td><td class="muted">'+fmt(c.open)+'</td></tr></table>'+
+    (m.done?"undo":"reached")+'</button></div>').join("")+'</div></section>' : "";
+  const fxAge=S.fxDate? "updated "+new Date(S.fxDate).toLocaleString("en-GB",{day:"numeric",month:"short",hour:"2-digit",minute:"2-digit"}) : "never updated";
+  return '<section><h2>Settlement for '+esc(kid.name)+'</h2><div class="card"><table>'+
+   '<tr><td>Balance (cash)</td><td>'+fmt(c.cash)+'</td></tr>'+
+   '<tr><td>Portfolio value</td><td>'+fmt(inv.value)+'</td></tr>'+
+   '<tr><td><b>Payout today</b></td><td><b>'+fmt(settle)+'</b></td></tr>'+
+   '<tr><td class="muted">Bonus still maturing</td><td class="muted">'+fmt(inv.matchOpen)+'</td></tr>'+
+   '<tr><td class="muted">Still reachable in the challenge</td><td class="muted">'+fmt(c.open)+'</td></tr></table>'+
    '<div style="margin-top:14px;display:flex;gap:8px;flex-wrap:wrap">'+
-   '<button class="btn small" onclick="addPayout()">Auszahlung buchen</button>'+
-   '<button class="btn small ghost" onclick="addBook()">Buch abhaken</button>'+
-   (kid.wordRate?'<button class="btn small ghost" onclick="addWords()">Wörter eintragen</button>':'')+
+   '<button class="btn small" onclick="addPayout()">Book a payout</button>'+
+   '<button class="btn small ghost" onclick="addBook()">Tick off a book</button>'+
+   '<button class="btn small ghost" onclick="addExtra()">Add extra money</button>'+
+   (kid.wordRate?'<button class="btn small ghost" onclick="addWords()">Enter word count</button>':'')+
    '</div></div></section>'+ms+
-   '<section><h2>Kurse</h2><div class="card">'+
-   '<div style="display:flex;gap:8px;flex-wrap:wrap"><button class="btn small" onclick="runFeed(this)">Kurse jetzt holen</button>'+
-   '<button class="btn small ghost" onclick="resetBase()">Startwerte auf heute setzen</button></div>'+
-   '<div class="feedlog">'+(S.feed.log||"Noch nichts geholt.")+'</div>'+
-   '<label>Google-Tabelle (Link zur Tabelle oder zum CSV)</label>'+
-   '<input type="text" value="'+(S.feed.sheet||"")+'" placeholder="https://docs.google.com/spreadsheets/d/..." onchange="S.feed.sheet=this.value.trim();save();render()">'+
-   '<div style="margin-top:10px"><button class="btn small ghost" onclick="sheetTemplate()">Vorlage für die Tabelle</button></div>'+
-   '<label>Bitcoin in € (falls der Feed klemmt)</label>'+
+   '<section><h2>Prices</h2><div class="card">'+
+   '<div style="display:flex;gap:8px;flex-wrap:wrap"><button class="btn small" onclick="runFeed(this)">Fetch prices now</button>'+
+   '<button class="btn small ghost" onclick="resetBase()">Set start values to today</button></div>'+
+   '<div class="feedlog">'+esc(S.feed.log||"Nothing fetched yet.")+'</div>'+
+   '<label>Google sheet (link to the sheet or to the CSV)</label>'+
+   '<input id="sheetIn" type="text" value="'+esc(S.feed.sheet||"")+'" placeholder="https://docs.google.com/spreadsheets/d/..." '+
+   'oninput="setSheet(this.value)" autocapitalize="off" autocorrect="off" spellcheck="false">'+
+   '<div style="margin-top:10px;display:flex;gap:8px;flex-wrap:wrap">'+
+   '<button class="btn small ghost" onclick="sheetTemplate()">Sheet template</button>'+
+   '<button class="btn small ghost" onclick="testSheet(this)">Test the link</button></div>'+
+   '<div class="notebox">The link is stored in its own slot, separate from the rest of the data, so an app '+
+   'update or a restored backup cannot lose it. Prices also refresh on their own in the background, at most '+
+   'every 6 hours, and never while the app is starting up.</div>'+
+   '<label>Auto refresh</label>'+
+   '<select onchange="S.feed.auto=(this.value===\'on\');save()">'+
+   '<option value="on"'+(S.feed.auto!==false?" selected":"")+'>on</option>'+
+   '<option value="off"'+(S.feed.auto===false?" selected":"")+'>off</option></select>'+
+   '<label>€1 in rupiah ('+fxAge+')</label>'+
+   '<input type="number" step="1" value="'+S.fx+'" onchange="setFx(Number(this.value)||S.fx);save();render()">'+
+   '<label>Bitcoin in € (if the feed is stuck)</label>'+
    '<input type="number" step="1" value="'+(S.prices.btc.px||"")+'" onchange="S.prices.btc.px=Number(this.value)||null;if(!S.prices.btc.base)S.prices.btc.base=S.prices.btc.px;save();render()">'+
-   '<label>Welt-ETF in € (falls der Feed klemmt)</label>'+
+   '<label>World fund in € (if the feed is stuck)</label>'+
    '<input type="number" step="0.01" value="'+(S.prices.etf.px||"")+'" onchange="S.prices.etf.px=Number(this.value)||null;if(!S.prices.etf.base)S.prices.etf.base=S.prices.etf.px;save();render()">'+
-   '<div class="warnbox">Kein API-Schlüssel nötig. Die Tabelle muss auf „Jeder mit dem Link: Betrachter“ stehen. Anteile werden zum Kurs am Kauftag gerechnet — Startwerte nachträglich zu ändern verzerrt nur die Prozentanzeige, nicht die Depotwerte.</div></div></section>'+
-   '<section><h2>Einstellungen '+kid.name+'</h2><div class="card">'+
-   '<label>Start der Challenge</label><input type="date" value="'+kid.start+'" onchange="kid_(this.value,\'start\')">'+
-   '<label>Taschengeld pro '+(kid.allowanceEvery==="week"?"Woche":"Monat")+' (€)</label>'+
+   '<div class="warnbox">No API key needed. The sheet has to be set to “Anyone with the link — Viewer”. '+
+   'Shares are valued at the price on the day of purchase, so changing start values later only shifts the '+
+   'percentage display, never the portfolio value.</div></div></section>'+
+   '<section><h2>Settings for '+esc(kid.name)+'</h2><div class="card">'+
+   '<label>Challenge start</label><input type="date" value="'+kid.start+'" onchange="kid_(this.value,\'start\')">'+
+   '<label>Pocket money per '+(kid.allowanceEvery==="week"?"week":"month")+' (€)</label>'+
    '<input type="number" step="0.5" value="'+kid.allowance+'" onchange="kid_(Number(this.value)||0,\'allowance\')">'+
-   '<label>Minuten pro Tag</label><input type="number" value="'+kid.minutes+'" onchange="kid_(Number(this.value)||10,\'minutes\')">'+
-   (kid.bonusMinutes?'<label>Bonus: Minuten / Tage pro Woche / Euro</label>'+
+   '<label>Minutes per day</label><input type="number" value="'+kid.minutes+'" onchange="kid_(Number(this.value)||10,\'minutes\')">'+
+   (kid.bonusMinutes?'<label>Bonus: minutes / days per week / euro</label>'+
      '<div style="display:flex;gap:8px">'+
      '<input type="number" value="'+kid.bonusMinutes+'" onchange="kid_(Number(this.value)||0,\'bonusMinutes\')">'+
      '<input type="number" value="'+kid.bonusDays+'" onchange="kid_(Number(this.value)||0,\'bonusDays\')">'+
      '<input type="number" step="0.5" value="'+kid.bonusEur+'" onchange="kid_(Number(this.value)||0,\'bonusEur\')"></div>':'')+
-   '<label>PIN</label><input type="text" value="'+S.pin+'" onchange="S.pin=this.value||\'1234\';save()">'+
+   '<label>PIN</label><input type="text" value="'+esc(S.pin)+'" onchange="S.pin=this.value||\'1234\';save()">'+
    '</div></section>'+
-   '<section><h2>Sicherung</h2><div class="card"><div style="display:flex;gap:8px;flex-wrap:wrap">'+
-   '<button class="btn small ghost" onclick="exportJSON()">Daten sichern</button>'+
-   '<button class="btn small ghost" onclick="importJSON()">Sicherung einlesen</button></div>'+
-   '<p class="sub" style="margin:12px 0 0">Alles liegt nur auf diesem iPad. Nach jeder Auszahlung sichern.</p></div></section>';
+   '<section><h2>Backup</h2><div class="card"><div style="display:flex;gap:8px;flex-wrap:wrap">'+
+   '<button class="btn small ghost" onclick="exportJSON()">Save data</button>'+
+   '<button class="btn small ghost" onclick="importJSON()">Load a backup</button></div>'+
+   '<p class="sub" style="margin:12px 0 0">Everything lives on this iPad only. Back up after every payout.</p></div></section>';
 }
 
 /* ---- actions ---- */
@@ -630,52 +785,140 @@ function logDay(min){
   save(); render();
 }
 function toggleMs(id){ const m=K().milestones.find(x=>x.id===id); m.done=m.done?null:iso(today()); save(); render(); }
-async function runFeed(btn){ btn.disabled=true; btn.textContent="hole Kurse…"; await fetchPrices(); }
+function toggleWordWeek(i){
+  const kid=K();
+  if(!kid.wordRate || !wordEditable(KID,i)) return;
+  const key="w"+i, full=wordFull(kid);
+  if((kid.words[key]||0)>=full) delete kid.words[key]; else kid.words[key]=full;
+  save(); render();
+}
+async function runFeed(btn){ btn.disabled=true; btn.textContent="fetching…"; await fetchPrices(false); }
+async function testSheet(btn){
+  const t=btn.textContent; btn.disabled=true; btn.textContent="testing…";
+  let ok=false;
+  for(const url of sheetUrls(S.feed.sheet)){
+    try{ const r=await fetchT(url,8000); if(r.ok){ const txt=await r.text(); if(csvRows(txt).length>1){ ok=true; break; } } }catch(e){}
+  }
+  btn.disabled=false; btn.textContent=t;
+  alert(ok? "The sheet is reachable." :
+    "The sheet could not be read. Check that it is shared with “Anyone with the link — Viewer”, or use File → Share → Publish to the web → CSV and paste that link instead.");
+}
 function resetBase(){
-  if(!confirm("Alle Startwerte auf die heutigen Kurse setzen? Die Prozentanzeige beginnt dann wieder bei 0.")) return;
+  if(!confirm("Set all start values to today's prices? The percentage display starts again at 0.")) return;
   for(const k of ["btc","etf"]) if(S.prices[k].px) S.prices[k].base=S.prices[k].px;
   for(const c of COMPANIES){ const s=S.prices.basket[c]; if(s.px) s.base=s.px; }
   save(); render();
 }
-function form(title,fields,onOk){
-  dlgBody.innerHTML='<h3>'+title+'</h3>'+fields.map(f=>
-    '<label>'+f.label+'</label><input id="f_'+f.id+'" type="'+(f.type||"text")+'" '+
-    (f.step?'step="'+f.step+'"':'')+' value="'+(f.value!==undefined?f.value:"")+'" '+
-    (f.type==="number"?'inputmode="decimal"':'')+'>').join("")+
-    '<div class="dlgbtns"><button class="btn ghost" onclick="dlg.close()">Abbrechen</button>'+
-    '<button class="btn" id="okBtn">Speichern</button></div>';
+function form(title,fields,onOk,note){
+  dlgBody.innerHTML='<h3>'+title+'</h3>'+(note?'<p class="sub">'+note+'</p>':'')+fields.map(f=>{
+    if(f.type==="select") return '<label>'+f.label+'</label><select id="f_'+f.id+'">'+
+      f.options.map(o=>'<option value="'+esc(o[0])+'"'+(f.value===o[0]?" selected":"")+'>'+esc(o[1])+'</option>').join("")+'</select>';
+    return '<label>'+f.label+'</label><input id="f_'+f.id+'" type="'+(f.type||"text")+'" '+
+      (f.step?'step="'+f.step+'"':'')+' value="'+esc(f.value!==undefined?f.value:"")+'" '+
+      (f.type==="number"?'inputmode="decimal"':'')+'>';
+  }).join("")+
+    '<div class="dlgbtns"><button class="btn ghost" onclick="dlg.close()">Cancel</button>'+
+    '<button class="btn" id="okBtn">Save</button></div>';
   dlg.showModal();
   okBtn.onclick=()=>{
     const v={}; fields.forEach(f=>{const el=document.getElementById("f_"+f.id);
+      v[f.id+"_raw"]=el.value;
       v[f.id]= f.type==="number"? Number(String(el.value).replace(",","."))||0 : el.value;});
     if(onOk(v)!==false){ dlg.close(); save(); render(); }
   };
 }
-function addSpend(){ form("Ausgabe eintragen",[{id:"label",label:"Wofür?"},{id:"eur",label:"Wie viel (€)",type:"number",step:"0.01"}],
-  v=>{ if(v.eur<=0) return false; K().spend.push({date:iso(today()),label:v.label,eur:v.eur}); }); }
-function addPayout(){ form("Auszahlung buchen",[{id:"eur",label:"Betrag (€)",type:"number",step:"0.01"},{id:"note",label:"Notiz"}],
+function moneyFrom(v){
+  /* returns {eur, idr, fx} or null; rupiah amounts are whole numbers and are
+     frozen at today's rate so a later rate change never rewrites history */
+  if(v.cur==="IDR"){
+    const raw=Math.round(Number(String(v.amt_raw).replace(/[^0-9]/g,""))||0);
+    if(raw<=0) return null;
+    const eur=Math.round(raw/S.fx*100)/100;
+    if(eur<=0) return null;
+    return {eur:eur, idr:raw, fx:S.fx};
+  }
+  const eur=Math.round(v.amt*100)/100;
+  if(eur<=0) return null;
+  return {eur:eur};
+}
+function addSpend(){
+  form("Add a purchase",[
+    {id:"label",label:"What did you buy?"},
+    {id:"cur",label:"Paid in",type:"select",value:"EUR",options:[["EUR","Euro (€)"],["IDR","Rupiah (Rp)"]]},
+    {id:"amt",label:"How much?",type:"number",step:"0.01"}
+  ],v=>{
+    const m=moneyFrom(v);
+    if(!m){ alert("Please enter an amount."); return false; }
+    K().spend.push(Object.assign({date:iso(today()),label:v.label||"Purchase"},m));
+  },"Rupiah is converted at today\u2019s rate, €1 = "+idr(S.fx)+", and keeps that rate.");
+}
+function addExtra(){
+  form("Extra money",[
+    {id:"label",label:"Where is it from?",value:"Gift"},
+    {id:"cur",label:"Given in",type:"select",value:"EUR",options:[["EUR","Euro (€)"],["IDR","Rupiah (Rp)"]]},
+    {id:"amt",label:"How much?",type:"number",step:"0.01"}
+  ],v=>{
+    const m=moneyFrom(v);
+    if(!m){ alert("Please enter an amount."); return false; }
+    const kid=K();
+    if(!Array.isArray(kid.extras)) kid.extras=[];
+    kid.extras.push(Object.assign({date:iso(today()),label:v.label||"Extra money"},m));
+  },"Birthday money, a gift from Oma, anything that is neither pocket money nor from the challenge.");
+}
+function addPayout(){ form("Book a payout",[{id:"eur",label:"Amount (€)",type:"number",step:"0.01"},{id:"note",label:"Note"}],
   v=>{ if(v.eur<=0) return false; K().payouts.push({date:iso(today()),eur:v.eur,note:v.note}); }); }
 function addBook(){
   const kid=K();
-  if(kid.books.length>=BOOKS[KID].length){ alert("Alle Bücher sind schon abgehakt."); return; }
-  form("Buch abhaken",[{id:"title",label:"Titel"}],v=>{ kid.books.push({title:v.title||"Buch",date:iso(today())}); });
+  if(kid.books.length>=BOOKS[KID].length){ alert("All books are already ticked off."); return; }
+  form("Tick off a book",[{id:"title",label:"Title"}],v=>{ kid.books.push({title:v.title||"Book",date:iso(today())}); });
 }
 function addWords(){
   const wk="w"+weekIndex(KID,today());
-  form("Unbekannte Wörter diese Woche",[{id:"n",label:"Anzahl",type:"number",value:K().words[wk]||0}],
+  form("New words this week",[{id:"n",label:"How many",type:"number",value:K().words[wk]||0}],
     v=>{ K().words[wk]=Math.max(0,Math.round(v.n)); });
 }
 function addDeposit(){
   const c=calc(KID), lv=level(BUY);
-  if(!lv){ alert("Für "+INSTR[BUY].name+" gibt es noch keinen Kurs. Papa muss ihn erst holen."); return; }
-  form("In "+INSTR[BUY].name+" anlegen",[{id:"eur",label:"Wie viel? Du hast "+fmt(c.cash),type:"number",step:"0.5"}],v=>{
+  if(!lv){ alert("There is no price for the "+INSTR[BUY].name+" yet. Papa has to fetch it first."); return; }
+  form("Invest in the "+INSTR[BUY].name,[{id:"eur",label:"How much? You have "+fmt(c.cash),type:"number",step:"0.5"}],v=>{
     if(v.eur<=0) return false;
-    if(v.eur>c.cash+0.001){ alert("So viel Guthaben ist nicht da."); return false; }
-    K().deposits.push({id:Date.now(),date:iso(today()),instrument:BUY,eur:v.eur,px:lv});
-  });
+    if(v.eur>c.cash+0.001){ alert("You do not have that much."); return false; }
+    K().deposits.push({id:"d"+Date.now(),date:iso(today()),instrument:BUY,eur:v.eur,px:lv});
+  },"A one-year clock starts today for this money. "+INSTR[BUY].care);
+}
+function sellDeposit(id){
+  const kid=K(), d=kid.deposits.find(x=>String(x.id)===String(id));
+  if(!d||d.sold) return;
+  const now=level(d.instrument)||d.px, val=d.eur*(now/d.px);
+  const vested = Date.now()-new Date(d.date+"T12:00:00").getTime() >= 365*DAY;
+  const daysLeft=Math.max(0,Math.ceil((new Date(d.date+"T12:00:00").getTime()+365*DAY-Date.now())/DAY));
+  const gain=val-d.eur;
+  dlgBody.innerHTML='<h3>Sell '+INSTR[d.instrument].name+'?</h3>'+
+    '<p>You put in <b>'+fmt(d.eur)+'</b> on '+dshort(d.date)+'. Today it is worth <b>'+fmt(val)+'</b> '+
+    '('+(gain>=0?"up ":"down ")+fmt(Math.abs(gain))+').</p>'+
+    (vested
+      ? '<p>The year is over, so you <b>keep the '+fmt(d.eur*0.5)+' bonus</b>. Selling moves '+
+        fmt(val)+' back into your balance.</p>'
+      : '<div class="warnbox">There are still <b>'+daysLeft+' days</b> to go. If you sell now you '+
+        '<b>give up the '+fmt(d.eur*0.5)+' bonus</b> for this money, and it does not come back if you buy again later.</div>')+
+    '<div class="dlgbtns"><button class="btn ghost" onclick="dlg.close()">Keep it</button>'+
+    '<button class="btn" onclick="doSell('+JSON.stringify(String(id))+')">Sell for '+fmt(val)+'</button></div>';
+  if(!dlg.open) dlg.showModal();
+}
+function doSell(id){
+  const kid=K(), d=kid.deposits.find(x=>String(x.id)===String(id));
+  if(!d||d.sold){ dlg.close(); return; }
+  const now=level(d.instrument)||d.px, val=d.eur*(now/d.px);
+  const vested = Date.now()-new Date(d.date+"T12:00:00").getTime() >= 365*DAY;
+  d.sold=true;
+  d.soldValue=Math.round(val*100)/100;
+  d.soldDate=iso(today());
+  d.soldPx=now;
+  d.matchClaimed=vested;
+  dlg.close(); save(); render();
 }
 const SHEET_TEMPLATE=[
- ["schluessel","wert"],
+ ["key","value"],
  ["EURIDR",'=GOOGLEFINANCE("CURRENCY:EURIDR")'],
  ["btc",'=GOOGLEFINANCE("CURRENCY:BTCEUR")'],
  ["etf",'=GOOGLEFINANCE("NYSEARCA:URTH")/GOOGLEFINANCE("CURRENCY:EURUSD")'],
@@ -690,26 +933,60 @@ const SHEET_TEMPLATE=[
  ["Tesla",'=GOOGLEFINANCE("NASDAQ:TSLA")/GOOGLEFINANCE("CURRENCY:EURUSD")']
 ].map(r=>r.join("\t")).join("\n");
 function sheetTemplate(){
-  dlgBody.innerHTML='<h3>Vorlage für die Tabelle</h3>'+
-   '<p class="sub">Neue Google-Tabelle anlegen, in Zelle A1 einfügen, dann freigeben: <b>Jeder mit dem Link — Betrachter</b>. Danach den Link hier eintragen.</p>'+
-   '<textarea id="tmpl" style="width:100%;height:150px;font-family:ui-monospace,monospace;font-size:12px;padding:10px;border-radius:11px;border:1.5px solid var(--line);background:var(--paper)">'+SHEET_TEMPLATE+'</textarea>'+
-   '<div class="dlgbtns"><button class="btn ghost" onclick="dlg.close()">Schliessen</button>'+
-   '<button class="btn" onclick="copyTmpl(this)">Kopieren</button></div>';
+  dlgBody.innerHTML='<h3>Sheet template</h3>'+
+   '<p class="sub">Create a new Google sheet, paste this into cell A1, then share it: <b>Anyone with the link — Viewer</b>. '+
+   'Paste the link into the field below. If the app cannot read it, use File → Share → Publish to the web → CSV and paste that link instead.</p>'+
+   '<textarea id="tmpl" style="height:150px;font-family:ui-monospace,monospace;font-size:12px">'+SHEET_TEMPLATE+'</textarea>'+
+   '<div class="dlgbtns"><button class="btn ghost" onclick="dlg.close()">Close</button>'+
+   '<button class="btn" onclick="copyTmpl(this)">Copy</button></div>';
   dlg.showModal();
 }
 function copyTmpl(b){
   const t=document.getElementById("tmpl");
   t.select(); t.setSelectionRange(0,99999);
   try{ navigator.clipboard.writeText(SHEET_TEMPLATE); }catch(e){ document.execCommand("copy"); }
-  b.textContent="Kopiert";
+  b.textContent="Copied";
 }
-function explainMatch(){
-  dlgBody.innerHTML='<h3>Der Spar-Bonus</h3>'+
-   '<p>Wenn du Geld anlegst und es <b>ein ganzes Jahr</b> liegen lässt, legt Papa <b>50 %</b> von dem, was du eingezahlt hast, oben drauf.</p>'+
-   '<p>Aus 20 € werden also 20 € plus 10 € Bonus — und dazu kommt, was der Kurs in der Zeit gemacht hat.</p>'+
-   '<p>Verkaufst du vorher, gibt es keinen Bonus. Der Kurs kann auch fallen. Der Bonus wird immer vom eingezahlten Betrag gerechnet.</p>'+
-   '<div class="dlgbtns"><button class="btn" onclick="dlg.close()">Verstanden</button></div>';
-  dlg.showModal();
+function explainInstrument(k){
+  const I=INSTR[k];
+  dlgBody.innerHTML='<h3>'+I.icon+' '+I.name+'</h3>'+
+   '<p>'+I.short+'</p>'+
+   '<h4>Why people like it</h4><p>'+I.why+'</p>'+
+   '<h4>What to watch out for</h4><p>'+I.care+'</p>'+
+   '<h4>How much it swings</h4><p>'+"●".repeat(I.risk)+"○".repeat(3-I.risk)+
+   ' — '+(I.risk===1?"the calmest of the three.":I.risk===2?"somewhere in between.":"the wildest of the three.")+'</p>'+
+   '<div class="dlgbtns"><button class="btn ghost" onclick="explainSaving()">How saving works</button>'+
+   '<button class="btn" onclick="dlg.close()">Got it</button></div>';
+  if(!dlg.open) dlg.showModal();
+}
+function explainSaving(){
+  dlgBody.innerHTML='<h3>How saving works</h3>'+
+   '<p>Money you leave in your balance stays exactly the same size. Money you invest can grow, and it can shrink.</p>'+
+   '<h4>The bonus</h4>'+
+   '<p>Leave money invested for <b>one whole year</b> and Papa adds <b>50% of what you put in</b>. '+
+   'Every time you invest, that money gets its own one-year clock.</p>'+
+   '<p>Put in €20 today. In a year the €20 is still yours, plus <b>€10</b> from Papa, plus whatever the price did in the meantime.</p>'+
+   '<h4>Why this is a good deal</h4>'+
+   '<p>Almost nothing in the world pays you 50% for waiting a year. And the bonus is counted on what you '+
+   '<b>put in</b>, not on what it is worth later, so even if the price falls the bonus stays the same size.</p>'+
+   '<h4>Why it is still risky</h4>'+
+   '<p>Prices move up and down every day and nobody knows which way. Here is €20 after one year:</p>'+
+   '<table><tr><td>price up a fifth</td><td>€24 + €10 = €34</td></tr>'+
+   '<tr><td>price does nothing</td><td>€20 + €10 = €30</td></tr>'+
+   '<tr><td>price down a fifth</td><td>€16 + €10 = €26</td></tr>'+
+   '<tr><td>price down a third</td><td>€13.33 + €10 = €23.33</td></tr>'+
+   '<tr><td>price down by half</td><td>€10 + €10 = €20</td></tr></table>'+
+   '<p>The bonus works like a cushion. As long as the price does not fall by more than a third, you still '+
+   'end up ahead of the €20 you started with. If it falls by half you get your €20 back and nothing more. '+
+   'If it falls further than that, you end up with less than you put in. That can happen.</p>'+
+   '<h4>Selling early</h4>'+
+   '<p>You can sell any time and the money goes straight back into your balance. But if you sell before the '+
+   'year is up, <b>the bonus is gone</b> — and the cushion goes with it. Then a price that has fallen is simply a loss.</p>'+
+   '<h4>A good rule</h4>'+
+   '<p>Only invest money you do not need soon. If you are saving for something you want to buy in a few weeks, '+
+   'leave it in your balance where it cannot shrink.</p>'+
+   '<div class="dlgbtns"><button class="btn" onclick="dlg.close()">Got it</button></div>';
+  if(!dlg.open) dlg.showModal();
 }
 function exportJSON(){
   const b=new Blob([JSON.stringify(S,null,2)],{type:"application/json"}), a=document.createElement("a");
@@ -718,11 +995,20 @@ function exportJSON(){
 function importJSON(){
   const i=document.createElement("input"); i.type="file"; i.accept="application/json";
   i.onchange=()=>{ const r=new FileReader(); r.onload=()=>{
-    try{ S=JSON.parse(r.result); save(); render(); alert("Sicherung eingelesen."); }
-    catch(e){ alert("Die Datei ließ sich nicht lesen."); } }; r.readAsText(i.files[0]); };
+    try{
+      const keep=S.feed.sheet;
+      S=JSON.parse(r.result);
+      if(!S.feed) S.feed={sheet:"",updated:null,tried:null,log:"",auto:true};
+      if(!S.feed.sheet && keep) S.feed.sheet=keep;
+      for(const k of ["juna","artus"]) if(S.kids&&S.kids[k]&&!Array.isArray(S.kids[k].extras)) S.kids[k].extras=[];
+      save(); render(); alert("Backup loaded.");
+    }
+    catch(e){ alert("That file could not be read."); } }; r.readAsText(i.files[0]); };
   i.click();
 }
 render();
+setTimeout(autoRefresh,1500);
+document.addEventListener("visibilitychange",()=>{ if(!document.hidden) setTimeout(autoRefresh,400); });
 </script>
 </body>
 </html>
