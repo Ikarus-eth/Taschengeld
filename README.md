@@ -93,6 +93,15 @@ Deposits go into Bitcoin, a world ETF, or an equal-weighted basket of nine compa
 (Alphabet, Microsoft, SpaceX, NVIDIA, Apple, Amazon, TSMC, Meta, Tesla). The basket is an
 index, base 100, averaged across the nine components' own base-100 indices.
 
+Each company is a tappable row showing what it is in one line, and opens an explainer with
+what they make and **where the child has already seen it** — the iPad in her hands for
+Apple, Minecraft for Microsoft, WhatsApp for Meta, the chip inside the iPad for TSMC. The
+copy lives in the `CO` map in `index.html`; a ten-year-old cannot picture a semiconductor
+foundry, so every entry has to name a thing she can point at. A "What is a share?" dialog
+covers ownership, why prices move, that the price is a collective guess about the future,
+and why nine companies move less than one. It is offered from the fund and the basket but
+not from Bitcoin, which is not a company.
+
 Any deposit held **365 whole days** (counted noon-to-noon, so the countdown ticks once a
 day and does not shift with the clock or a timezone change) earns a **50% match on the
 deposited amount**, not on market
