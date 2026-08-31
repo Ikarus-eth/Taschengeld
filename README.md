@@ -73,6 +73,23 @@ behaviour — paid twice within two days.
 
 The Money screen states the date of the next payment under the pocket money row.
 
+## Deadlines
+
+The challenge runs in whole Monday-to-Sunday weeks, so the deadline is the Sunday closing
+the last week — `monday(start) + weeks*7 - 1`, not `start + weeks*7`. Juna: Sunday 17 Jan
+2027. Artus: Sunday 8 Nov 2026. A start date that is not a Monday still ends on a Sunday.
+
+The Goals screen opens with a Time left card: how long is left in words, the deadline
+written out, a bar of weeks elapsed, and which week of how many. It has three states —
+before the start it says when it begins, during it counts down, and afterwards it says the
+challenge finished and that what was earned is still hers. Every unfinished sport goal and
+empty book slot carries `by 17 Jan`, the books card says how many are left and by when, and
+after the deadline the wording switches from asking to stating (`not reached in time`)
+rather than continuing to nag.
+
+The word box shows the Sunday its week closes, and the last-week row says it stays open
+until the end of the current week, which matches `wordEditable`.
+
 The weekly rate ladder advances on **qualifying weeks, not calendar weeks**. A missed week
 costs nothing already earned; it only delays reaching the higher rate.
 
