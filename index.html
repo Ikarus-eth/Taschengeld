@@ -64,7 +64,11 @@ button{font-family:inherit;font-size:17px;cursor:pointer;}
 .stamp.bonus.done{border-color:var(--gold);background:var(--gold-soft);}
 .stamp .mins{font-size:14px;font-weight:600;color:var(--ink-soft);}
 .weekdots{display:flex;justify-content:space-between;gap:6px;margin-top:14px;}
-.wd{flex:1;text-align:center;font-size:13px;color:var(--ink-soft);}
+.weeklabel{font-size:12px;font-weight:600;color:var(--ink-soft);margin:14px 0 4px;text-align:left;}
+.wd{flex:1;text-align:center;font-size:13px;color:var(--ink-soft);font-family:inherit;
+  background:none;border:0;padding:0;cursor:pointer;}
+.wd .dnum{display:block;font-size:11px;opacity:.7;}
+.wd.lock{opacity:.3;cursor:default;}
 .wd i{display:block;height:34px;border-radius:9px;border:1.5px solid var(--line);background:var(--paper);margin-bottom:4px;}
 .wd.on i{background:var(--accent);border-color:var(--accent);}
 .wd.plus i{background:var(--gold);border-color:var(--gold);}
@@ -151,7 +155,7 @@ const RATES={
 };
 const BOOKS={juna:[4,7,10,14], artus:[2,2,2,2,2]};
 const COMPANIES=["Alphabet","Microsoft","SpaceX","NVIDIA","Apple","Amazon","TSMC","Meta","Tesla"];
-const TICKER={Alphabet:"GOOGL",Microsoft:"MSFT",SpaceX:null,NVIDIA:"NVDA",Apple:"AAPL",
+const TICKER={Alphabet:"GOOGL",Microsoft:"MSFT",SpaceX:"SPCX",NVIDIA:"NVDA",Apple:"AAPL",
   Amazon:"AMZN",TSMC:"TSM",Meta:"META",Tesla:"TSLA"};
 const INSTR={btc:{name:"Bitcoin",icon:"₿"}, etf:{name:"Welt-ETF",icon:"🌍"}, basket:{name:"Zukunfts-Korb",icon:"🚀"}};
 
@@ -417,13 +421,34 @@ function hero(c){
    '<div><span class="dot" style="background:var(--accent);opacity:.4"></span>noch möglich<b class="num">'+fmt(c.open)+'</b></div>'+
    '<div style="text-align:right">insgesamt<b class="num">'+fmt(max)+'</b></div></div></div>';
 }
+function editableDay(key){
+  const diff=Math.round((today()-new Date(key+"T12:00:00"))/DAY);
+  return diff>=0 && diff<=6;
+}
+function cycleDay(key){
+  if(!editableDay(key)) return;
+  const kid=K(), cur=kid.days[key]||0;
+  let next;
+  if(cur===0) next=kid.minutes;
+  else if(kid.bonusMinutes && cur<kid.bonusMinutes) next=kid.bonusMinutes;
+  else next=0;
+  if(next) kid.days[key]=next; else delete kid.days[key];
+  save(); render();
+}
+function weekRow(m0,label){
+  const kid=K(), tk=iso(today());
+  const cells=WD.map((w,i)=>{
+    const d=addD(m0,i), key=iso(d), mm=kid.days[key]||0, ed=editableDay(key);
+    const cls=(kid.bonusMinutes&&mm>=kid.bonusMinutes)?"plus":(mm>=kid.minutes?"on":"");
+    return '<button class="wd '+cls+' '+(key===tk?"today":"")+' '+(ed?"edit":"lock")+'" '+
+      (ed?'onclick="cycleDay(\''+key+'\')"':'disabled')+'><i></i>'+w+
+      '<span class="dnum">'+d.getDate()+'.</span></button>';
+  }).join("");
+  return '<div class="weeklabel">'+label+'</div><div class="weekdots">'+cells+'</div>';
+}
 function vHeute(c){
   const kid=K(), t=today(), tk=iso(t), m=kid.days[tk]||0, m0=monday(t);
-  const dots=WD.map((w,i)=>{
-    const d=addD(m0,i), key=iso(d), mm=kid.days[key]||0;
-    const cls=(kid.bonusMinutes&&mm>=kid.bonusMinutes)?"plus":(mm>=kid.minutes?"on":"");
-    return '<div class="wd '+cls+' '+(key===tk?"today":"")+'"><i></i>'+w+'</div>';
-  }).join("");
+  const dots=weekRow(addD(m0,-7),"letzte Woche")+weekRow(m0,"diese Woche");
   let stampHtml;
   if(kid.bonusMinutes){
     stampHtml='<div class="stamps">'+
@@ -449,7 +474,10 @@ function vHeute(c){
     }
   }
   return hero(c)+'<section><h2>Heute</h2><div class="today">'+stampHtml+
-    '<div class="weekdots">'+dots+'</div><p class="sub" style="margin:12px 0 0">'+msg+'</p></div></section>'+stairs(c);
+    dots+'<p class="sub" style="margin:12px 0 0">'+msg+'</p>'+
+    '<p class="sub" style="margin:8px 0 0;opacity:.75">Vergessen? Tippe auf einen Tag der letzten 7 Tage, um ihn nachzutragen'+
+    (kid.bonusMinutes?' — nochmal tippen für '+kid.bonusMinutes+' Minuten, ein drittes Mal löscht ihn.':' — nochmal tippen löscht ihn.')+'</p>'+
+    '</div></section>'+stairs(c);
 }
 function stairs(c){
   const maxR=Math.max.apply(null,RATES[KID]);
@@ -553,7 +581,6 @@ function vEltern(c){
     '<div class="row"><div class="grow"><div>'+m.label+'</div><div class="sub">'+fmt(m.eur)+(m.done?" · "+dshort(m.done):"")+
     '</div></div><button class="btn small '+(m.done?"ghost":"")+'" onclick="toggleMs(\''+m.id+'\')">'+
     (m.done?"zurücknehmen":"erreicht")+'</button></div>').join("")+'</div></section>' : "";
-  const sp=S.prices.basket.SpaceX;
   return '<section><h2>Abrechnung '+kid.name+'</h2><div class="card"><table>'+
    '<tr><td>Guthaben (Bargeld)</td><td>'+fmt(c.cash)+'</td></tr>'+
    '<tr><td>Depotwert</td><td>'+fmt(inv.value)+'</td></tr>'+
@@ -572,8 +599,6 @@ function vEltern(c){
    '<label>Google-Tabelle (Link zur Tabelle oder zum CSV)</label>'+
    '<input type="text" value="'+(S.feed.sheet||"")+'" placeholder="https://docs.google.com/spreadsheets/d/..." onchange="S.feed.sheet=this.value.trim();save();render()">'+
    '<div style="margin-top:10px"><button class="btn small ghost" onclick="sheetTemplate()">Vorlage für die Tabelle</button></div>'+
-   '<label>SpaceX von Hand (100 = Start)</label>'+
-   '<input type="number" step="1" value="'+(sp.px&&sp.base?Math.round(sp.px/sp.base*100):100)+'" onchange="S.prices.basket.SpaceX={px:Number(this.value)||100,base:100,sym:null};save();render()">'+
    '<label>Bitcoin in € (falls der Feed klemmt)</label>'+
    '<input type="number" step="1" value="'+(S.prices.btc.px||"")+'" onchange="S.prices.btc.px=Number(this.value)||null;if(!S.prices.btc.base)S.prices.btc.base=S.prices.btc.px;save();render()">'+
    '<label>Welt-ETF in € (falls der Feed klemmt)</label>'+
@@ -656,7 +681,7 @@ const SHEET_TEMPLATE=[
  ["etf",'=GOOGLEFINANCE("NYSEARCA:URTH")/GOOGLEFINANCE("CURRENCY:EURUSD")'],
  ["Alphabet",'=GOOGLEFINANCE("NASDAQ:GOOGL")/GOOGLEFINANCE("CURRENCY:EURUSD")'],
  ["Microsoft",'=GOOGLEFINANCE("NASDAQ:MSFT")/GOOGLEFINANCE("CURRENCY:EURUSD")'],
- ["SpaceX","100"],
+ ["SpaceX",'=GOOGLEFINANCE("NASDAQ:SPCX")/GOOGLEFINANCE("CURRENCY:EURUSD")'],
  ["NVIDIA",'=GOOGLEFINANCE("NASDAQ:NVDA")/GOOGLEFINANCE("CURRENCY:EURUSD")'],
  ["Apple",'=GOOGLEFINANCE("NASDAQ:AAPL")/GOOGLEFINANCE("CURRENCY:EURUSD")'],
  ["Amazon",'=GOOGLEFINANCE("NASDAQ:AMZN")/GOOGLEFINANCE("CURRENCY:EURUSD")'],
