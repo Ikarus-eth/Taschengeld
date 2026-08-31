@@ -1,0 +1,15 @@
+{
+  "name": "Challenges",
+  "short_name": "Challenges",
+  "description": "Reading challenges, pocket money and saving for Juna and Artus.",
+  "start_url": "./",
+  "scope": "./",
+  "display": "standalone",
+  "orientation": "portrait",
+  "background_color": "#F3F5F0",
+  "theme_color": "#1B2118",
+  "icons": [
+    { "src": "apple-touch-icon.png", "sizes": "180x180", "type": "image/png" },
+    { "src": "icon-512.png", "sizes": "512x512", "type": "image/png", "purpose": "any" }
+  ]
+}
