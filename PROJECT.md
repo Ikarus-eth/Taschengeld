@@ -47,8 +47,17 @@ curl -s -X PUT -H "Authorization: Bearer $T" \
 ```
 
 Verify after pushing: poll `api.github.com/repos/$REPO/pages/builds/latest` until
-`status: built` (~40 s), then diff `raw.githubusercontent.com/.../main/index.html`
-against the local build. Note that `ikarus-eth.github.io` is **not** on the sandbox
+`status: built` (~40 s), then diff the local build against the **contents API**, not
+`raw.githubusercontent.com`:
+
+```bash
+curl -s -H "Authorization: Bearer $T" "https://api.github.com/repos/$REPO/contents/$F" \
+  | python3 -c "import sys,json,base64;sys.stdout.buffer.write(base64.b64decode(json.load(sys.stdin)['content']))"
+```
+
+`raw.githubusercontent.com` caches for a couple of minutes and will happily serve the
+*previous* version after a successful push. That looks exactly like a failed push and is
+not one. The contents API is authoritative and immediate. Note that `ikarus-eth.github.io` is **not** on the sandbox
 network allowlist, so fetching the live site directly returns a 403 from the proxy —
 that is not a site failure. Use `raw.githubusercontent.com`, which is allowlisted.
 
