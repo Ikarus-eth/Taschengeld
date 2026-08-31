@@ -249,9 +249,9 @@ function fresh(){
         allowance:20, allowanceEvery:"month",
         bookMin:"200 pages or more, your own pick", wordRate:0.10, wordCap:1,
         milestones:[
-          {id:"h3",label:"Handstand for 3 seconds (3x in one day)",eur:20,done:null},
-          {id:"h10",label:"Handstand for 10 seconds",eur:80,done:null},
-          {id:"hw",label:"10 steps on your hands",eur:50,done:null}],
+          {id:"h3",label:"Handstand for 3 seconds (3x in one day)",eur:20,done:null,due:"2026-12-25"},
+          {id:"h10",label:"Handstand for 10 seconds",eur:80,done:null,due:"2026-12-25"},
+          {id:"hw",label:"10 steps on your hands",eur:50,done:null,due:"2026-12-25"}],
         days:{}, books:[], words:{}, spend:[], deposits:[], payouts:[], extras:[] },
       artus:{ name:"Artus", start:"2026-08-31", weeks:10, minDays:5, minutes:10,
         bonusMinutes:15, bonusDays:4, bonusEur:1,
@@ -304,7 +304,15 @@ function load(){
         if(dep.id===undefined) dep.id="d"+Math.random().toString(36).slice(2);
       }
       if(DE2EN[kid.bookMin]) kid.bookMin=DE2EN[kid.bookMin];
-      kid.milestones=(kid.milestones||[]).map(m=>DE2EN[m.label]? Object.assign({},m,{label:DE2EN[m.label]}) : m);
+      kid.milestones=(kid.milestones||[]).map(m=>{
+        const o=Object.assign({},m);
+        if(DE2EN[o.label]) o.label=DE2EN[o.label];
+        if(o.due===undefined){                       /* added Sept 2026 */
+          const def=(f.kids[k].milestones||[]).find(x=>x.id===o.id);
+          if(def && def.due) o.due=def.due;
+        }
+        return o;
+      });
       out.kids[k]=kid;
     }
     out.log=Array.isArray(p.log)? p.log : [];
@@ -528,6 +536,15 @@ function weekEnd(k,i){
   return addD(monday(new Date(K(k).start+"T12:00:00")), i*7+6);
 }
 function daysUntil(d){ return Math.round((d-today())/DAY); }
+/* A sport goal may have its own deadline; without one it runs to the end of the
+   challenge like everything else. */
+function msDue(k,m){ return m.due? new Date(m.due+"T12:00:00") : challengeEnd(k); }
+function msLive(k,m){ return daysUntil(msDue(k,m))>=0; }
+/* one shared date if every open goal has the same one, otherwise null */
+function msSharedDue(k){
+  const due=K(k).milestones.filter(m=>m.due).map(m=>m.due);
+  return due.length===K(k).milestones.length && new Set(due).size===1 ? due[0] : null;
+}
 function humanLeft(n){
   if(n<0) return "over";
   if(n===0) return "today is the last day";
@@ -594,7 +611,9 @@ function calc(k){
     }
   }
   const msEur=kid.milestones.filter(m=>m.done).reduce((s,m)=>s+m.eur,0);
-  const msLeft=kid.milestones.filter(m=>!m.done).reduce((s,m)=>s+m.eur,0);
+  /* an unreached goal whose date has passed is no longer possible, so it must
+     leave the "still possible" figure rather than sitting there forever */
+  const msLeft=kid.milestones.filter(m=>!m.done && msLive(k,m)).reduce((s,m)=>s+m.eur,0);
 
   const earned=weekEur+bonusEur+bookEur+wordEur+msEur;
   const open=futureWeek+bonusLeft+bookLeft+wordLeft+msLeft;
@@ -744,7 +763,9 @@ function deadlineCard(){
   const wi=Math.min(weekIndex(KID,t)+1, kid.weeks);
   return '<section><h2>Time left</h2><div class="card">'+
    '<div style="font-size:21px;font-weight:700">'+humanLeft(left)+'</div>'+
-   '<div class="sub">Everything below has to be done by '+longDate(end)+'.</div>'+
+   '<div class="sub">Reading, books'+(kid.wordRate?", words":"")+
+   (msSharedDue(KID)?"":" and the sport goals")+' run until '+longDate(end)+'.'+
+   (msSharedDue(KID)? " The sport goals have their own date, further down." : "")+'</div>'+
    '<div class="bar"><i class="b2" style="width:'+Math.round(wi/kid.weeks*100)+'%"></i></div>'+
    '<div class="legend"><div>week '+wi+' of '+kid.weeks+'</div>'+
    '<div style="text-align:right">last day '+dshort(iso(end))+'</div></div>'+
@@ -753,11 +774,25 @@ function deadlineCard(){
 function vGoals(c){
   const kid=K();
   const end=challengeEnd(KID), endShort=dshort(iso(end)), over=daysUntil(end)<0;
+  const shared=msSharedDue(KID);
+  const msNote=(()=>{
+    if(!kid.milestones.length) return "";
+    const openMs=kid.milestones.filter(m=>!m.done);
+    if(!openMs.length) return '<p class="sub" style="margin:12px 0 0">All of them done.</p>';
+    if(!shared) return "";
+    const d=new Date(shared+"T12:00:00"), left=daysUntil(d);
+    return '<p class="sub" style="margin:12px 0 0">'+
+      (left<0? "The date for these was "+longDate(d)+", so they can no longer be earned."
+             : "These have their own date: "+longDate(d)+" — "+humanLeft(left)+".")+'</p>';
+  })();
   const ms=kid.milestones.length? '<section><h2>Sport</h2><div class="card">'+
-    kid.milestones.map(m=>'<div class="row"><div class="check '+(m.done?"on":"")+'"></div>'+
-    '<div class="grow"><div>'+esc(m.label)+'</div><div class="sub">'+
-    (m.done? "done on "+dshort(m.done) : over? "not reached in time" : "by "+endShort)+'</div>'+
-    '</div><div class="money">'+fmt(m.eur)+'</div></div>').join("")+'</div></section>' : "";
+    kid.milestones.map(m=>{
+      const due=msDue(KID,m), live=msLive(KID,m);
+      return '<div class="row"><div class="check '+(m.done?"on":"")+'"></div>'+
+      '<div class="grow"><div>'+esc(m.label)+'</div><div class="sub'+(!m.done&&!live?" flag":"")+'">'+
+      (m.done? "done on "+dshort(m.done) : live? "by "+dshort(iso(due)) : "not reached in time")+'</div>'+
+      '</div><div class="money">'+fmt(m.eur)+'</div></div>';
+    }).join("")+msNote+'</div></section>' : "";
   const bk=BOOKS[KID].map((eur,i)=>{
     const b=kid.books[i];
     return '<div class="row"><div class="check '+(b?"on":"")+'"></div><div class="grow"><div>'+
@@ -1089,6 +1124,8 @@ function vParents(c){
    '<label>Pocket money per '+(kid.allowanceEvery==="week"?"week":"month")+' (€)</label>'+
    '<input type="number" step="0.5" value="'+kid.allowance+'" onchange="kid_(Number(this.value)||0,\'allowance\')">'+
    '<label>Minutes per day</label><input type="number" value="'+kid.minutes+'" onchange="kid_(Number(this.value)||10,\'minutes\')">'+
+   (kid.milestones.length? '<label>Sport goals deadline (blank = end of the challenge)</label>'+
+     '<input type="date" value="'+esc(msSharedDue(KID)||"")+'" onchange="setMsDue(this.value)">' : '')+
    (kid.bonusMinutes?'<label>Bonus: minutes / days per week / euro</label>'+
      '<div style="display:flex;gap:8px">'+
      '<input type="number" value="'+kid.bonusMinutes+'" onchange="kid_(Number(this.value)||0,\'bonusMinutes\')">'+
@@ -1106,6 +1143,14 @@ function vParents(c){
 function kid_(v,f){ const was=K()[f]; K()[f]=v;
   if(was!==v) logEvent(KID,"setting",{d:iso(today()),label:f,v:String(v),p:String(was)});
   save(); render(); }
+function setMsDue(v){
+  const kid=K(), was=msSharedDue(KID)||"";
+  const due=(v||"").trim()||null;
+  for(const m of kid.milestones) m.due=due;
+  if(was!==(due||"")) logEvent(KID,"setting",{d:iso(today()),label:"Sport goals deadline",
+    v:due||"end of the challenge",p:was||"end of the challenge"});
+  save(); render();
+}
 function setPin(v){ const was=S.pin; S.pin=v||"1234";
   if(was!==S.pin) logEvent(KID,"setting",{d:iso(today()),label:"PIN",v:"changed",p:""}); save(); }
 function setFxManual(v){ const was=S.fx; setFx(Number(v)||S.fx);
