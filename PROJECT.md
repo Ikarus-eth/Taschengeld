@@ -147,9 +147,19 @@ Design constraint agreed earlier: annual challenge payouts should stay within ro
 2–3× the annual pocket money for that child. The €100 handstand prize is a deliberate
 one-time launch anchor, not a template for future cycles.
 
+- **The app stores state, not events — except for the audit log.** Reading days are a
+  date→minutes map, so the state alone cannot show who changed what or when. The log
+  (added Sept 2026) is the only history that exists. Every mutation must append to it; a
+  new action that moves money and does not call `logEvent` is a hole in the review.
+- **The review boundary is a sequence number, not a timestamp.** The family moves between
+  UTC+8 and UTC+1/+2, and ISO timestamps are UTC while the day headings are local. Derive
+  the day an action happened with `logDayOf(e)`, never by slicing `e.t`.
+
 ## Things deliberately not built
 
 - No backend, no accounts, no sync. Data is `localStorage` on one device, with JSON
   export/import in the parent view. The weekly cash payout is the real backup.
 - No live rate fetch for EUR→IDR on load; the sheet or a manual field covers it.
-- No parent-side analytics dashboard.
+- No parent-side analytics dashboard beyond the review log.
+- No tamper-proofing. The log is a record on a device the child holds, not a lock. Signing
+  entries or shipping them off-device would need a backend, which is out of scope.
