@@ -268,7 +268,7 @@ function today(){const x=new Date();x.setHours(12,0,0,0);return x;}
 function addD(d,n){const x=new Date(d);x.setDate(x.getDate()+n);return x;}
 const WD=["Mon","Tue","Wed","Thu","Fri","Sat","Sun"];
 const K=k=>S.kids[k||KID];
-function weekIndex(k,d){ return Math.floor((monday(d)-monday(new Date(K(k).start+"T12:00:00")))/(7*DAY)); }
+function weekIndex(k,d){ return Math.round((monday(d)-monday(new Date(K(k).start+"T12:00:00")))/(7*DAY)); }
 function dshort(d){ const x=new Date(d+"T12:00:00"); return x.toLocaleDateString("en-GB",{day:"numeric",month:"short"}); }
 function esc(s){ return String(s==null?"":s).replace(/&/g,"&amp;").replace(/</g,"&lt;").replace(/>/g,"&gt;").replace(/"/g,"&quot;"); }
 
@@ -433,6 +433,32 @@ function wordEditable(k,i){
   const nowWi=weekIndex(k,today());
   return i===nowWi || i===nowWi-1;
 }
+/* Pocket money lands on the first day of a period and is never paid for a part
+   period. Monthly: the 1st of the month, starting with the first 1st that falls
+   on or after the challenge start. Weekly: Monday, same rule. A challenge that
+   starts on 31 Aug therefore pays nothing for August and its first amount on
+   1 Sep — counting calendar months touched would pay twice in two days. */
+function firstPayday(kid){
+  const st=new Date(kid.start+"T12:00:00");
+  if(kid.allowanceEvery==="week"){
+    const m=monday(st);
+    return m<st? addD(m,7) : m;
+  }
+  const d=st.getDate()>1? 1:0;
+  return new Date(st.getFullYear(), st.getMonth()+d, 1, 12,0,0,0);
+}
+function allowancePeriods(kid,t){
+  const fp=firstPayday(kid);
+  if(t<fp) return 0;
+  if(kid.allowanceEvery==="week") return Math.round((monday(t)-fp)/(7*DAY))+1;
+  return (t.getFullYear()-fp.getFullYear())*12+(t.getMonth()-fp.getMonth())+1;
+}
+function nextPayday(kid,t){
+  const fp=firstPayday(kid);
+  if(t<fp) return fp;
+  return kid.allowanceEvery==="week"? addD(monday(t),7)
+    : new Date(t.getFullYear(), t.getMonth()+1, 1, 12,0,0,0);
+}
 function calc(k){
   const kid=K(k), ws=weekStats(k);
   const weekEur=ws.weeks.reduce((s,w)=>s+w.rate,0);
@@ -460,11 +486,8 @@ function calc(k){
   const earned=weekEur+bonusEur+bookEur+wordEur+msEur;
   const open=futureWeek+bonusLeft+bookLeft+wordLeft+msLeft;
 
-  const st=new Date(kid.start+"T12:00:00"), t=today();
-  let periods=0;
-  if(t>=st) periods = kid.allowanceEvery==="week"? Math.floor((t-st)/(7*DAY))+1
-    : (t.getFullYear()-st.getFullYear())*12+(t.getMonth()-st.getMonth())+1;
-  const allowance=Math.max(0,periods)*kid.allowance;
+  const t=today();
+  const allowance=allowancePeriods(kid,t)*kid.allowance;
   const spent=kid.spend.reduce((s,x)=>s+x.eur,0);
   const extraEur=(kid.extras||[]).reduce((s,x)=>s+x.eur,0);
   const paidOut=kid.payouts.reduce((s,x)=>s+x.eur,0);
@@ -476,11 +499,14 @@ function calc(k){
   return {ws,weekEur,bonusEur,bonusLeft,futureWeek,bookEur,bookLeft,wordEur,wordLeft,wordWeeks,
     msEur,msLeft,earned,open,allowance,extraEur,spent,paidOut,cash,remain,inv};
 }
+function daysHeld(d){ return Math.round((today()-new Date(d.date+"T12:00:00"))/DAY); }
 function invested(k){
-  const kid=K(k), t=Date.now();
+  const kid=K(k);
   let principalOpen=0,principalAll=0,value=0,matchPaid=0,matchOpen=0,proceeds=0; const open=[],sold=[];
   for(const d of kid.deposits){
-    const vested = t-new Date(d.date+"T12:00:00").getTime() >= 365*DAY;
+    /* whole days, both ends anchored at noon: the countdown ticks once a day and
+       does not wobble with the time of day or a DST change */
+    const held=daysHeld(d), vested = held>=365;
     principalAll+=d.eur;
     if(d.sold){
       proceeds+=d.soldValue||0;
@@ -492,8 +518,7 @@ function invested(k){
     const val=d.eur*(now/d.px);
     principalOpen+=d.eur; value+=val;
     if(vested) matchPaid+=d.eur*0.5; else matchOpen+=d.eur*0.5;
-    open.push(Object.assign({},d,{value:val,vested,
-      daysLeft:Math.max(0,Math.ceil((new Date(d.date+"T12:00:00").getTime()+365*DAY-t)/DAY))}));
+    open.push(Object.assign({},d,{value:val,vested,daysLeft:Math.max(0,365-held)}));
   }
   return {principalOpen,principalAll,value,matchPaid,matchOpen,proceeds,open,sold};
 }
@@ -651,7 +676,7 @@ function vMoney(c){
    '<tr><td>Books</td><td>'+fmt(c.bookEur)+'</td></tr>'+
    (kid.wordRate?'<tr><td>New words</td><td>'+fmt(c.wordEur)+'</td></tr>':'')+
    (kid.milestones.length?'<tr><td>Sport goals</td><td>'+fmt(c.msEur)+'</td></tr>':'')+
-   '<tr><td>Pocket money</td><td>'+fmt(c.allowance)+'</td></tr>'+
+   '<tr><td>Pocket money<div class="sub">next '+fmt(kid.allowance)+' on '+dshort(iso(nextPayday(kid,today())))+'</div></td><td>'+fmt(c.allowance)+'</td></tr>'+
    (c.extraEur?'<tr><td>Gifts and extras</td><td>'+fmt(c.extraEur)+'</td></tr>':'')+
    (c.inv.matchPaid?'<tr><td>Saving bonus from Papa</td><td>'+fmt(c.inv.matchPaid)+'</td></tr>':'')+
    (c.inv.proceeds?'<tr><td>Investments sold</td><td>'+fmt(c.inv.proceeds)+'</td></tr>':'')+
@@ -890,8 +915,7 @@ function sellDeposit(id){
   const kid=K(), d=kid.deposits.find(x=>String(x.id)===String(id));
   if(!d||d.sold) return;
   const now=level(d.instrument)||d.px, val=d.eur*(now/d.px);
-  const vested = Date.now()-new Date(d.date+"T12:00:00").getTime() >= 365*DAY;
-  const daysLeft=Math.max(0,Math.ceil((new Date(d.date+"T12:00:00").getTime()+365*DAY-Date.now())/DAY));
+  const held=daysHeld(d), vested=held>=365, daysLeft=Math.max(0,365-held);
   const gain=val-d.eur;
   dlgBody.innerHTML='<h3>Sell '+INSTR[d.instrument].name+'?</h3>'+
     '<p>You put in <b>'+fmt(d.eur)+'</b> on '+dshort(d.date)+'. Today it is worth <b>'+fmt(val)+'</b> '+
@@ -909,7 +933,7 @@ function doSell(id){
   const kid=K(), d=kid.deposits.find(x=>String(x.id)===String(id));
   if(!d||d.sold){ dlg.close(); return; }
   const now=level(d.instrument)||d.px, val=d.eur*(now/d.px);
-  const vested = Date.now()-new Date(d.date+"T12:00:00").getTime() >= 365*DAY;
+  const vested = daysHeld(d)>=365;
   d.sold=true;
   d.soldValue=Math.round(val*100)/100;
   d.soldDate=iso(today());
