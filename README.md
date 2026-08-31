@@ -148,9 +148,37 @@ money and challenge payouts. It is added to the balance and appears in "Where th
 comes from", but it never counts towards *earned* and never affects the challenge total.
 It can also be entered in rupiah.
 
+## Review log
+
+Every change to state is appended to `S.log`, capped at 1200 entries. An entry records the
+moment of the tap (`t`), a monotonic sequence number (`n`), the day it refers to (`d`), who
+made it (`by`: `p` if the parent view was open, otherwise `k`), the euro effect, and the
+`earned` and `cash` totals as they stood immediately after. Nothing in the app deletes an
+entry; restoring a backup unions the two logs rather than replacing.
+
+The parent view's Review section shows the log grouped by the day the action was taken,
+with a summary and a "needs a look" count. Windows: since the last check, 7 days, 30 days,
+everything. "Mark as checked" stores the highest sequence number seen, per child — a
+sequence number, not a timestamp, so a clock correction or a flight between timezones
+cannot hide a new entry or resurface an old one. Export writes a CSV.
+
+Flagged automatically:
+
+| Flag | Why |
+|---|---|
+| filled in *n* days later | back-filling is allowed up to 7 days, so lateness is the thing to eyeball |
+| *n* days entered on this one day | three or more past days entered in one day, covering three or more dates |
+| day cleared | a logged day was removed again |
+| ticked by *name* | the child ticked her own word week |
+| money added by hand | extra money is the only entry that creates money from nothing |
+| setting changed / backup restored | anything that moves the totals without an activity behind it |
+
+Not a security boundary: it is a record on a device the child holds. It catches casual
+inflation of the numbers, not someone editing `localStorage` directly.
+
 ## Parent view
 
 PIN-gated, default `1234`, changeable in settings. Covers: settlement figure, booking
-payouts, ticking off books and milestones, entering word counts, adding extra money, price
+payouts, the review log, ticking off books and milestones, entering word counts, adding extra money, price
 refresh and manual price overrides, the auto-refresh toggle, challenge start dates, pocket
 money amounts, and JSON backup.
