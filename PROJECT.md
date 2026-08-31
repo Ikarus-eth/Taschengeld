@@ -97,7 +97,7 @@ has not been confirmed on the actual device. If the parent view's status log sho
 
 ## Current payout structure
 
-See `README.md` in the repo for the full tables. Summary: Juna 20 weeks from 7 Sept 2026,
+See `README.md` in the repo for the full tables. Summary: Juna 20 weeks from 31 Aug 2026,
 max €305, reading ladder €2→€8 plus four books plus three handstand milestones. Artus
 10 weeks, max €35.50, reading aloud 10 min/day plus a 15-minute bonus tier plus five
 Erstlesebücher. No physical challenge for Artus in this cycle.
