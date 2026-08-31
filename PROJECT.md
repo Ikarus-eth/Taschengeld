@@ -50,6 +50,13 @@ curl -s -X PUT -H "Authorization: Bearer $T" \
   "https://api.github.com/repos/$REPO/contents/$F" --data-binary @/tmp/p.json
 ```
 
+Push related files in as few commits as possible and expect the intermediate builds to
+report `errored`. Every commit triggers a legacy Pages build, and a burst of pushes trips
+the build rate limit, so all but the last come back `Page build failed`. That is not a
+broken site: check `api.github.com/repos/$REPO/pages` for `status: built` and confirm the
+**latest** build's commit matches the tip. Eight commits in ninety seconds produced seven
+errored builds and one good one (Sept 2026).
+
 Verify after pushing: poll `api.github.com/repos/$REPO/pages/builds/latest` until
 `status: built` (~40 s), then diff the local build against the **contents API**, not
 `raw.githubusercontent.com`:
