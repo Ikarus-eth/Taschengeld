@@ -159,9 +159,9 @@ function slot(sym){ return {px:null, base:null, sym:sym||null}; }
 function fresh(){
   return {
     v:2, fx:17500, pin:"1234",
-    feed:{key:"", updated:null, usdPerEur:1.08, log:""},
+    feed:{sheet:"", updated:null, log:""},
     prices:{ btc:slot("BTC"), etf:slot("URTH"),
-      basket:Object.fromEntries(COMPANIES.map(c=>[c, TICKER[c]?slot(TICKER[c]):{px:100,base:100,sym:null}])) },
+      basket:Object.fromEntries(COMPANIES.map(c=>[c, slot(TICKER[c])])) },
     kids:{
       juna:{ name:"Juna", start:"2026-09-07", weeks:20, minDays:5, minutes:20,
         bonusMinutes:0, bonusDays:0, bonusEur:0,
@@ -244,45 +244,81 @@ function levelPct(inst){
 }
 function tradable(inst){ return inst==="basket" || level(inst)>0; }
 
-async function fetchPrices(){
-  const log=[];
-  try{
-    const r=await fetch("https://api.frankfurter.app/latest?from=EUR&to=USD,IDR");
-    const j=await r.json();
-    if(j&&j.rates){
-      if(j.rates.USD) S.feed.usdPerEur=j.rates.USD;
-      if(j.rates.IDR) S.fx=Math.round(j.rates.IDR);
-      log.push("Wechselkurse ✓ (1 € = "+S.fx.toLocaleString("de-DE")+" Rp)");
-    } else log.push("Wechselkurse ✗");
-  }catch(e){ log.push("Wechselkurse ✗ — alter Kurs bleibt"); }
-
-  try{
-    const r=await fetch("https://api.coinbase.com/v2/prices/BTC-EUR/spot");
-    const j=await r.json();
-    const p=Number(j&&j.data&&j.data.amount);
-    if(p>0){ setPx(S.prices.btc,p); log.push("Bitcoin ✓ "+Math.round(p).toLocaleString("de-DE")+" €"); }
-    else log.push("Bitcoin ✗");
-  }catch(e){ log.push("Bitcoin ✗ — alter Kurs bleibt"); }
-
-  const key=(S.feed.key||"").trim();
-  if(!key){ log.push("Aktien übersprungen — kein Finnhub-Schlüssel hinterlegt"); }
-  else{
-    const jobs=[["Welt-ETF",S.prices.etf]];
-    for(const c of COMPANIES) if(TICKER[c]) jobs.push([c,S.prices.basket[c]]);
-    let ok=0, bad=[];
-    for(const pair of jobs){
-      const nm=pair[0], sl=pair[1];
-      try{
-        const r=await fetch("https://finnhub.io/api/v1/quote?symbol="+encodeURIComponent(sl.sym)+"&token="+encodeURIComponent(key));
-        const j=await r.json();
-        const usd=Number(j&&j.c);
-        if(usd>0){ setPx(sl, usd/S.feed.usdPerEur); ok++; } else bad.push(nm);
-      }catch(e){ bad.push(nm); }
-      await new Promise(res=>setTimeout(res,150));
-    }
-    log.push("Aktien: "+ok+" von "+jobs.length+" geholt"+(bad.length?" — fehlt: "+bad.join(", "):""));
+function csvRows(t){
+  const rows=[]; let row=[], f="", q=false;
+  for(let i=0;i<t.length;i++){
+    const ch=t[i];
+    if(q){ if(ch==='"'){ if(t[i+1]==='"'){f+='"';i++;} else q=false; } else f+=ch; }
+    else if(ch==='"') q=true;
+    else if(ch===","){ row.push(f); f=""; }
+    else if(ch==="\n"){ row.push(f); f=""; rows.push(row); row=[]; }
+    else if(ch!=="\r") f+=ch;
   }
-  log.push("SpaceX bleibt Handarbeit — nicht börsennotiert.");
+  if(f||row.length){ row.push(f); rows.push(row); }
+  return rows;
+}
+/* tolerates 1.234,56 and 1,234.56 and 1234.56 */
+function num(x){
+  let t=String(x).trim().replace(/[^0-9.,\-]/g,"");
+  if(!t) return NaN;
+  const lc=t.lastIndexOf(","), ld=t.lastIndexOf(".");
+  if(lc>-1&&ld>-1) t = lc>ld ? t.replace(/\./g,"").replace(",",".") : t.replace(/,/g,"");
+  else if(lc>-1){ const p=t.split(","); t = (p.length===2&&p[1].length!==3)? t.replace(",",".") : t.replace(/,/g,""); }
+  return parseFloat(t);
+}
+function sheetUrls(raw){
+  const u=(raw||"").trim(); if(!u) return [];
+  if(/output=csv/.test(u)) return [u];
+  const m=u.match(/\/d\/(?:e\/)?([A-Za-z0-9_-]{20,})/);
+  if(!m) return [u];
+  const id=m[1];
+  return ["https://docs.google.com/spreadsheets/d/"+id+"/gviz/tq?tqx=out:csv",
+          "https://docs.google.com/spreadsheets/d/e/"+id+"/pub?output=csv"];
+}
+async function fetchPrices(){
+  const log=[]; let map=null;
+  for(const url of sheetUrls(S.feed.sheet)){
+    try{
+      const r=await fetch(url,{cache:"no-store"});
+      if(!r.ok) throw new Error(r.status);
+      const rows=csvRows(await r.text()); const m={};
+      for(const row of rows){
+        if(row.length<2) continue;
+        const k=String(row[0]).trim().toLowerCase(), v=num(row[1]);
+        if(k && isFinite(v) && v>0) m[k]=v;
+      }
+      if(Object.keys(m).length){ map=m; break; }
+    }catch(e){ /* try the next url shape */ }
+  }
+  if(!S.feed.sheet) log.push("Keine Tabelle hinterlegt.");
+  else if(!map) log.push("Tabelle ✗ — nicht erreichbar oder nicht freigegeben.");
+  else{
+    let n=0;
+    if(map.euridr){ S.fx=Math.round(map.euridr); log.push("Wechselkurs ✓ 1 € = "+S.fx.toLocaleString("de-DE")+" Rp"); }
+    if(map.btc){ setPx(S.prices.btc,map.btc); n++; }
+    if(map.etf){ setPx(S.prices.etf,map.etf); n++; }
+    const miss=[];
+    for(const c of COMPANIES){
+      const v=map[c.toLowerCase()];
+      if(v){ setPx(S.prices.basket[c],v); n++; } else miss.push(c);
+    }
+    log.push("Tabelle ✓ "+n+" Kurse übernommen"+(miss.length?" — fehlt: "+miss.join(", "):""));
+  }
+  if(!map || !map.btc){
+    try{
+      const r=await fetch("https://api.coinbase.com/v2/prices/BTC-EUR/spot");
+      const j=await r.json(); const p=Number(j&&j.data&&j.data.amount);
+      if(p>0){ setPx(S.prices.btc,p); log.push("Bitcoin ✓ "+Math.round(p).toLocaleString("de-DE")+" € (Coinbase)"); }
+      else log.push("Bitcoin ✗");
+    }catch(e){ log.push("Bitcoin ✗ — alter Kurs bleibt"); }
+  }
+  if(!map || !map.euridr){
+    try{
+      const r=await fetch("https://api.frankfurter.app/latest?from=EUR&to=IDR");
+      const j=await r.json();
+      if(j&&j.rates&&j.rates.IDR){ S.fx=Math.round(j.rates.IDR); log.push("Wechselkurs ✓ (EZB)"); }
+    }catch(e){ log.push("Wechselkurs ✗ — alter Kurs bleibt"); }
+  }
   S.feed.updated=new Date().toISOString();
   S.feed.log=log.join("\n");
   save(); render();
@@ -533,15 +569,16 @@ function vEltern(c){
    '<div style="display:flex;gap:8px;flex-wrap:wrap"><button class="btn small" onclick="runFeed(this)">Kurse jetzt holen</button>'+
    '<button class="btn small ghost" onclick="resetBase()">Startwerte auf heute setzen</button></div>'+
    '<div class="feedlog">'+(S.feed.log||"Noch nichts geholt.")+'</div>'+
-   '<label>Finnhub API-Schlüssel (kostenlos, für Aktien)</label>'+
-   '<input type="text" value="'+(S.feed.key||"")+'" placeholder="leer = nur Bitcoin und Wechselkurse" onchange="S.feed.key=this.value.trim();save()">'+
+   '<label>Google-Tabelle (Link zur Tabelle oder zum CSV)</label>'+
+   '<input type="text" value="'+(S.feed.sheet||"")+'" placeholder="https://docs.google.com/spreadsheets/d/..." onchange="S.feed.sheet=this.value.trim();save();render()">'+
+   '<div style="margin-top:10px"><button class="btn small ghost" onclick="sheetTemplate()">Vorlage für die Tabelle</button></div>'+
    '<label>SpaceX von Hand (100 = Start)</label>'+
-   '<input type="number" step="1" value="'+Math.round((sp.px/sp.base)*100)+'" onchange="S.prices.basket.SpaceX={px:Number(this.value)||100,base:100,sym:null};save();render()">'+
+   '<input type="number" step="1" value="'+(sp.px&&sp.base?Math.round(sp.px/sp.base*100):100)+'" onchange="S.prices.basket.SpaceX={px:Number(this.value)||100,base:100,sym:null};save();render()">'+
    '<label>Bitcoin in € (falls der Feed klemmt)</label>'+
    '<input type="number" step="1" value="'+(S.prices.btc.px||"")+'" onchange="S.prices.btc.px=Number(this.value)||null;if(!S.prices.btc.base)S.prices.btc.base=S.prices.btc.px;save();render()">'+
    '<label>Welt-ETF in € (falls der Feed klemmt)</label>'+
    '<input type="number" step="0.01" value="'+(S.prices.etf.px||"")+'" onchange="S.prices.etf.px=Number(this.value)||null;if(!S.prices.etf.base)S.prices.etf.base=S.prices.etf.px;save();render()">'+
-   '<div class="warnbox">Der Schlüssel liegt nur auf diesem Gerät, nie im Repository. Anteile werden zum Kurs am Kauftag gerechnet — Startwerte nachträglich zu ändern verzerrt nur die Prozentanzeige, nicht die Depotwerte.</div></div></section>'+
+   '<div class="warnbox">Kein API-Schlüssel nötig. Die Tabelle muss auf „Jeder mit dem Link: Betrachter“ stehen. Anteile werden zum Kurs am Kauftag gerechnet — Startwerte nachträglich zu ändern verzerrt nur die Prozentanzeige, nicht die Depotwerte.</div></div></section>'+
    '<section><h2>Einstellungen '+kid.name+'</h2><div class="card">'+
    '<label>Start der Challenge</label><input type="date" value="'+kid.start+'" onchange="kid_(this.value,\'start\')">'+
    '<label>Taschengeld pro '+(kid.allowanceEvery==="week"?"Woche":"Monat")+' (€)</label>'+
@@ -611,6 +648,35 @@ function addDeposit(){
     if(v.eur>c.cash+0.001){ alert("So viel Guthaben ist nicht da."); return false; }
     K().deposits.push({id:Date.now(),date:iso(today()),instrument:BUY,eur:v.eur,px:lv});
   });
+}
+const SHEET_TEMPLATE=[
+ ["schluessel","wert"],
+ ["EURIDR",'=GOOGLEFINANCE("CURRENCY:EURIDR")'],
+ ["btc",'=GOOGLEFINANCE("CURRENCY:BTCEUR")'],
+ ["etf",'=GOOGLEFINANCE("NYSEARCA:URTH")/GOOGLEFINANCE("CURRENCY:EURUSD")'],
+ ["Alphabet",'=GOOGLEFINANCE("NASDAQ:GOOGL")/GOOGLEFINANCE("CURRENCY:EURUSD")'],
+ ["Microsoft",'=GOOGLEFINANCE("NASDAQ:MSFT")/GOOGLEFINANCE("CURRENCY:EURUSD")'],
+ ["SpaceX","100"],
+ ["NVIDIA",'=GOOGLEFINANCE("NASDAQ:NVDA")/GOOGLEFINANCE("CURRENCY:EURUSD")'],
+ ["Apple",'=GOOGLEFINANCE("NASDAQ:AAPL")/GOOGLEFINANCE("CURRENCY:EURUSD")'],
+ ["Amazon",'=GOOGLEFINANCE("NASDAQ:AMZN")/GOOGLEFINANCE("CURRENCY:EURUSD")'],
+ ["TSMC",'=GOOGLEFINANCE("NYSE:TSM")/GOOGLEFINANCE("CURRENCY:EURUSD")'],
+ ["Meta",'=GOOGLEFINANCE("NASDAQ:META")/GOOGLEFINANCE("CURRENCY:EURUSD")'],
+ ["Tesla",'=GOOGLEFINANCE("NASDAQ:TSLA")/GOOGLEFINANCE("CURRENCY:EURUSD")']
+].map(r=>r.join("\t")).join("\n");
+function sheetTemplate(){
+  dlgBody.innerHTML='<h3>Vorlage für die Tabelle</h3>'+
+   '<p class="sub">Neue Google-Tabelle anlegen, in Zelle A1 einfügen, dann freigeben: <b>Jeder mit dem Link — Betrachter</b>. Danach den Link hier eintragen.</p>'+
+   '<textarea id="tmpl" style="width:100%;height:150px;font-family:ui-monospace,monospace;font-size:12px;padding:10px;border-radius:11px;border:1.5px solid var(--line);background:var(--paper)">'+SHEET_TEMPLATE+'</textarea>'+
+   '<div class="dlgbtns"><button class="btn ghost" onclick="dlg.close()">Schliessen</button>'+
+   '<button class="btn" onclick="copyTmpl(this)">Kopieren</button></div>';
+  dlg.showModal();
+}
+function copyTmpl(b){
+  const t=document.getElementById("tmpl");
+  t.select(); t.setSelectionRange(0,99999);
+  try{ navigator.clipboard.writeText(SHEET_TEMPLATE); }catch(e){ document.execCommand("copy"); }
+  b.textContent="Kopiert";
 }
 function explainMatch(){
   dlgBody.innerHTML='<h3>Der Spar-Bonus</h3>'+
