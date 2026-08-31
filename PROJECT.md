@@ -7,7 +7,7 @@ anything — this file describes intent and workflow, the repo is the source of 
 
 A single-file web app that tracks two children's reading challenges, pocket money,
 spending, and a virtual savings portfolio. Used by the kids on an iPad from the home
-screen; the parent view is PIN-gated.
+screen; the parent view is PIN-gated. The whole interface is in English.
 
 - Repo: `Ikarus-eth/Taschengeld`, branch `main`, root folder
 - Live: https://ikarus-eth.github.io/Taschengeld/
@@ -59,9 +59,13 @@ that is not a site failure. Use `raw.githubusercontent.com`, which is allowliste
   Prior chats caught real bugs this way. Do not push untested changes.
 - **No build step, no dependencies, no service worker.** `index.html` is self-contained.
   A service worker in an earlier project (blitzword) caused a cache bug that cost hours.
-- **No network calls on page load.** Price fetching is a manual button in the parent view
-  only, so a dead API never blocks a child from logging a reading day.
-- Child-facing copy is German. Code and comments in English.
+- **Nothing is fetched during load, and no fetch is ever awaited on the critical path.**
+  Prices now also auto-refresh in the background — 1.5 s after the first paint and on
+  returning to the app, throttled to once per 6 hours, 9 s timeout, silent on failure.
+  This replaces the earlier "manual button only" rule (Aug 2026): the constraint that
+  mattered was that a dead API can never block a child from logging a reading day, and a
+  deferred non-blocking fetch keeps that. The parent view can switch it off.
+- Child-facing copy is English (was German until Aug 2026). Code and comments in English.
 - iPad-first: large touch targets, minimal text, works in portrait.
 
 ## Design decisions worth not re-litigating
@@ -74,6 +78,17 @@ that is not a site failure. Use `raw.githubusercontent.com`, which is allowliste
   deposit runs its own 365-day clock. Selling early forfeits that deposit's match only.
 - **Deposits store the instrument's price on the buy date**, so refreshing prices never
   retroactively distorts existing holdings.
+- **Selling is allowed at any time.** A sale freezes `soldValue` at that day's price, keeps
+  the match only if the deposit was already 365 days old, and leaves the record in the
+  ledger. Cash accounting debits *every* euro ever deposited, not just the open principal —
+  subtracting only open principal returns the stake for free on each sale. That bug was
+  latent in the ledger until selling existed; it is fixed and covered by a test.
+- **Spending can be entered in rupiah**, converted at that day's rate and frozen there
+  (`idr`, `fx`, `eur` all stored). Balances themselves stay in euro.
+- **Extra money** (gifts, birthday money) is a third category, separate from pocket money
+  and challenge payouts. It lands in the balance but never counts as *earned*.
+- **The word bonus is a weekly checkbox for the child**, not a number only a parent can
+  enter: 10 marked words fills the week's €1 cap. This week and last week are tappable.
 - **Pocket money is unconditional** and strictly separate from challenge payouts. It is
   never tied to grades, chores, or behaviour, and is never clawed back.
 - Cash balance is allowed to go negative rather than blocking a payout entry, so the
@@ -91,16 +106,24 @@ The app accepts either a normal sheet URL or a published-CSV URL and tries the `
 
 Fallbacks: Coinbase for Bitcoin, frankfurter.app (ECB) for EUR→IDR. Both keyless.
 
+The sheet URL is mirrored into its own `localStorage` key, `challenges_feed`, and restored
+from there whenever the main blob comes back without it. The field saves on every keystroke
+(`oninput`), not on blur — the previous `onchange` handler could lose a pasted URL when a
+re-render replaced the input before the change event fired, which is the most likely cause
+of the feed silently unlinking itself. The parent view also has a "Test the link" button.
+
 **Open question:** whether Google's CSV endpoints send CORS headers for browser fetches
 has not been confirmed on the actual device. If the parent view's status log shows
-`Tabelle ✗`, the fallback plan is a Google Apps Script web app endpoint.
+`Sheet ✗`, the fallback plan is a Google Apps Script web app endpoint. Bitcoin and the
+rupiah rate survive that case via Coinbase and frankfurter.app; the ETF and the nine
+company prices do not, and would need the manual fields.
 
 ## Current payout structure
 
-See `README.md` in the repo for the full tables. Summary: Juna 20 weeks from 31 Aug 2026,
+See `README.md` in the repo for the full tables. Summary: Juna 20 weeks from 7 Sept 2026,
 max €305, reading ladder €2→€8 plus four books plus three handstand milestones. Artus
 10 weeks, max €35.50, reading aloud 10 min/day plus a 15-minute bonus tier plus five
-Erstlesebücher. No physical challenge for Artus in this cycle.
+early readers. No physical challenge for Artus in this cycle.
 
 Design constraint agreed earlier: annual challenge payouts should stay within roughly
 2–3× the annual pocket money for that child. The €100 handstand prize is a deliberate
