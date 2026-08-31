@@ -21,7 +21,7 @@ data in Safari wipes all of them).
 
 ## Payout rules
 
-### Juna — 20 weeks, from 7 Sept 2026
+### Juna — 20 weeks, from 31 Aug 2026 (ends Sun 17 Jan 2027)
 | Item | Payout |
 |---|---|
 | Reading, 20 min/day, ≥5 of 7 days | weeks 1–4 €2 · 5–8 €4 · 9–12 €5 · 13–16 €6 · 17–20 €8 |
@@ -34,7 +34,7 @@ data in Safari wipes all of them).
 
 Maximum: **€305**
 
-### Artus — 10 weeks, from 7 Sept 2026
+### Artus — 10 weeks, from 31 Aug 2026 (ends Sun 8 Nov 2026)
 | Item | Payout |
 |---|---|
 | Reading aloud, 10 min/day, ≥5 of 7 days | weeks 1–3 €1 · 4–6 €1.50 · 7–10 €2 |
