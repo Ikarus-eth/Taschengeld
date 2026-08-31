@@ -122,6 +122,10 @@ that is not a site failure. Use `raw.githubusercontent.com`, which is allowliste
   vocabulary. Each of the nine basket companies has a "where you have seen it" line, and
   the concept ladder is company → share → basket → the 50% match. If a new instrument is
   added it needs the same treatment or it will not be understood.
+- **Sport goals have their own deadline** (`due` per milestone, 25 Dec 2026), separate from
+  the reading challenge. Anything with a deadline needs the same three pieces: the date on
+  the item, an expiry rule in `calc` so it stops counting as reachable, and copy that stops
+  asking once the date is gone. A date shown but not enforced in `calc` is worse than none.
 - **The deadline is the Sunday that closes the last week**, `monday(start)+weeks*7-1`.
   Never `start + weeks*7`: a start date that is not a Monday would then land the deadline
   mid-week, and the whole engine counts Monday-to-Sunday weeks.
@@ -171,8 +175,9 @@ company prices do not, and would need the manual fields.
 
 ## Current payout structure
 
-See `README.md` in the repo for the full tables. Summary: Juna 20 weeks from 7 Sept 2026,
-max €305, reading ladder €2→€8 plus four books plus three handstand milestones. Artus
+See `README.md` in the repo for the full tables. Summary: Juna 20 weeks from 31 Aug 2026,
+max €305, reading ladder €2→€8 plus four books plus three handstand milestones, the latter
+due 25 Dec 2026 rather than at the end of the challenge. Artus
 10 weeks, max €35.50, reading aloud 10 min/day plus a 15-minute bonus tier plus five
 early readers. No physical challenge for Artus in this cycle.
 
