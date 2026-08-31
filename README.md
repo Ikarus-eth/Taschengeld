@@ -2,7 +2,7 @@
 
 Single-file web app for tracking Juna's and Artus's reading challenges, pocket money,
 spending, and a virtual savings portfolio. Deployed as a static page on GitHub Pages,
-used on an iPad from the home screen.
+used on an iPad from the home screen. The interface is in English.
 
 **No build step. No dependencies. No service worker.** `index.html` is the entire app.
 
@@ -14,6 +14,9 @@ To force iOS to pick up a new version, open the URL once in Safari with `?v=N` a
 ## Data
 
 Everything lives in `localStorage` under the key `challenges_v2`, on the device only.
+The price-sheet URL is mirrored into a second key, `challenges_feed`, and restored from
+there if the main blob ever loses it — an app update or a partial backup restore cannot
+unlink the feed.
 There is no backend and no sync. The parent view has JSON export/import; back up after
 each payout. Note that `localStorage` is scoped to the `github.io` origin, so it is shared
 with other Pages projects on the same account (keys do not collide, but clearing website
@@ -26,7 +29,7 @@ data in Safari wipes all of them).
 |---|---|
 | Reading, 20 min/day, ≥5 of 7 days | weeks 1–4 €2 · 5–8 €4 · 9–12 €5 · 13–16 €6 · 17–20 €8 |
 | Books, 200+ pages, her choice | €4 / €7 / €10 / €14 |
-| Unknown words marked while reading | €0.10 each, capped €1/week |
+| New words marked while reading | €0.10 each, capped €1/week — 10 words fills the week |
 | Handstand 3s (3x in one day) | €20 |
 | Handstand 10s | €80 |
 | 10 steps on hands | €50 |
@@ -39,7 +42,7 @@ Maximum: **€305**
 |---|---|
 | Reading aloud, 10 min/day, ≥5 of 7 days | weeks 1–3 €1 · 4–6 €1.50 · 7–10 €2 |
 | Bonus: 15 min on ≥4 days in a week | €1 |
-| Erstlesebücher, one per fortnight | €2 each, 5 books |
+| Early readers, one per fortnight | €2 each, 5 books |
 | Pocket money | €2/week, unconditional |
 
 Maximum: **€35.50**. No physical challenge in this cycle.
@@ -49,11 +52,15 @@ costs nothing already earned; it only delays reaching the higher rate.
 
 ## Logging
 
-The big stamp on the Heute screen logs today. The two week rows underneath (last week and
+The big stamp on the Today screen logs today. The two week rows underneath (last week and
 this week) are tappable for any day inside a rolling **7-day window**, so a forgotten or
 mistaken day can be corrected. Tapping cycles: empty → base minutes → bonus minutes (only
 where a bonus tier exists) → empty. Days older than 7 days and future days render dimmed
 and do not respond.
+
+Juna ticks the **new words** box herself on the Goals screen once she has marked 10 words
+in a week; that fills the week's €1 cap. This week and last week are tappable, older weeks
+are locked. The parent view keeps a numeric entry for partial counts.
 
 ## Savings
 
@@ -68,15 +75,33 @@ value — so a drawdown of up to 33% still leaves the child above principal. Sel
 Deposits store the instrument's price on the buy date (`px`), so refreshing prices never
 retroactively distorts holdings.
 
+**Selling.** Each open holding has a Sell button. The confirmation states the current value
+and, if the deposit has not reached 365 days, the exact match amount being given up. A sale
+freezes `soldValue` at that day's price; later price moves do not change a completed sale.
+Vested sales keep the match (`matchClaimed`). Sold deposits stay in the ledger and are
+listed under "Already sold".
+
+Cash accounting: every euro ever deposited is debited from the balance and a sale credits
+its proceeds back. Subtracting only *open* principal would hand the stake back for free on
+every sale.
+
+The Saving screen carries a three-level swing indicator per instrument, a per-instrument
+explainer (why people like it / what to watch out for), and a "How saving works" dialog
+with the payoff table down to a 50% drawdown, where the match makes the child break even.
+
 ## Price feed
 
-Manual refresh only, from the parent view. Nothing fetches on page load, so a dead source
-never blocks the child from logging a reading day. Failures leave the last price in place.
+Manual refresh from the parent view, plus a **background auto-refresh**: at most once every
+6 hours, started 1.5 s after the first paint and on returning to the app. Nothing is fetched
+*during* load and nothing is awaited on the critical path, so a dead source still never
+blocks the child from logging a reading day. Every request has a 9 s timeout; failures are
+silent and leave the last price in place. The parent view can switch auto-refresh off.
 
 **No API key.** Prices come from a Google Sheet published with "anyone with the link can
 view". The sheet holds two columns — key and value in EUR — and uses `GOOGLEFINANCE()`
-formulas that Google keeps current. The parent view has a "Vorlage für die Tabelle" button
-that copies the exact rows to paste into A1.
+formulas that Google keeps current. The parent view has a "Sheet template" button that
+copies the exact rows to paste into A1, and a "Test the link" button that reports whether
+the sheet is readable from the device.
 
 Keys the app reads: `EURIDR`, `btc`, `etf`, and the nine company names. Values are read in
 EUR, so USD tickers are divided by `CURRENCY:EURUSD` inside the sheet — the app does no
@@ -96,8 +121,24 @@ Fallbacks when the sheet is unreachable or a row is missing:
 SpaceX has traded on Nasdaq as `SPCX` since its IPO on 12 June 2026, so it is a normal
 row like the rest. No manual field.
 
+The rupiah rate is also editable by hand in the parent view, with the timestamp of the last
+automatic update shown next to it.
+
+## Spending and extra money
+
+Pocket money and all balances are in **euro**. A purchase can be entered in **rupiah**: it
+is converted at that day's rate and the record stores `idr`, `fx` and the resulting `eur`,
+so a later rate move never rewrites past spending. The spending list shows the original
+rupiah amount and the rate used.
+
+**Extra money** (birthday money, a gift from Oma) is a separate category from both pocket
+money and challenge payouts. It is added to the balance and appears in "Where the money
+comes from", but it never counts towards *earned* and never affects the challenge total.
+It can also be entered in rupiah.
+
 ## Parent view
 
 PIN-gated, default `1234`, changeable in settings. Covers: settlement figure, booking
-payouts, ticking off books and milestones, entering word counts, price refresh and manual
-price overrides, challenge start dates, pocket money amounts, and JSON backup.
+payouts, ticking off books and milestones, entering word counts, adding extra money, price
+refresh and manual price overrides, the auto-refresh toggle, challenge start dates, pocket
+money amounts, and JSON backup.
