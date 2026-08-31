@@ -13,7 +13,8 @@ screen; the parent view is PIN-gated. The whole interface is in English.
 - Live: https://ikarus-eth.github.io/Taschengeld/
 - Files: `index.html` (the entire app), `apple-touch-icon.png` / `icon-512.png` /
   `favicon-32.png` / `manifest.webmanifest` (home screen assets),
-  `tools/make-icons.py` (regenerates those PNGs, run by hand, never at deploy),
+  `tools/icon-source.png` + `tools/prepare-icon.py` (the artwork and the script that
+  turns it into those PNGs, run by hand, never at deploy),
   `README.md` (spec), `PROJECT.md` (this file)
 
 ## GitHub access
@@ -179,9 +180,17 @@ one-time launch anchor, not a template for future cycles.
 black and applies its own squircle mask, so the source must have no alpha and no rounded
 corners of its own. PNG only; SVG and data URIs do not work for a web clip.
 
-Four designs live in `tools/make-icons.py`: `spines-ink` (shipped), `book-ink`,
-`book-juna`, `spines-paper`. To switch: `python3 tools/make-icons.py book-ink` and push the
-three PNGs. Nothing in `index.html` changes.
+The artwork is supplied, not generated: `tools/icon-source.png`. To change it, replace that
+file and run `python3 tools/prepare-icon.py`, then push the three PNGs. Nothing in
+`index.html` changes, because the filenames never change.
+
+The script exists because supplied artwork usually arrives with rounded corners already
+drawn in. The current source rounds at 20% of its width while the iOS mask cuts at about
+22.5%, which is close enough that the flat corner colour can show as pale notches at the
+mid-corner points, since the iOS shape is a superellipse rather than a circular arc. The
+script floods each corner with the sampled background colour so the image reaches the edge
+in every direction and the mask has nothing to expose. It also flattens any alpha, since
+iOS composites transparency onto black.
 
 **iOS caches the web clip icon at the moment the shortcut is created.** Changing the icon
 does nothing to a shortcut that already exists. The shortcut has to be deleted from the
