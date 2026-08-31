@@ -46,9 +46,9 @@ data in Safari wipes all of them).
 | Reading, 20 min/day, ≥5 of 7 days | weeks 1–4 €2 · 5–8 €4 · 9–12 €5 · 13–16 €6 · 17–20 €8 |
 | Books, 200+ pages, her choice | €4 / €7 / €10 / €14 |
 | New words marked while reading | €0.10 each, capped €1/week — 10 words fills the week |
-| Handstand 3s (3x in one day) | €20 |
-| Handstand 10s | €80 |
-| 10 steps on hands | €50 |
+| Handstand 3s (3x in one day) | €20 — by 25 Dec 2026 |
+| Handstand 10s | €80 — by 25 Dec 2026 |
+| 10 steps on hands | €50 — by 25 Dec 2026 |
 | Pocket money | €20 on the 1st of each month, unconditional |
 
 Maximum: **€305**
@@ -75,7 +75,16 @@ The Money screen states the date of the next payment under the pocket money row.
 
 ## Deadlines
 
-The challenge runs in whole Monday-to-Sunday weeks, so the deadline is the Sunday closing
+The sport goals have their **own** deadline, Friday 25 December 2026, 23 days before the
+reading challenge ends. It is stored per milestone as `due`; a milestone without one falls
+back to the challenge end. The parent view has a date field that moves all three at once,
+and clearing it returns them to the challenge end.
+
+An unreached goal whose date has passed leaves the *still possible* figure, so the maximum
+drops from €305 to €155 on 26 December if none were reached. The parent can still mark one
+reached after the date — it pays, and the review log records when it was booked.
+
+Everything else runs in whole Monday-to-Sunday weeks, so that deadline is the Sunday closing
 the last week — `monday(start) + weeks*7 - 1`, not `start + weeks*7`. Juna: Sunday 17 Jan
 2027. Artus: Sunday 8 Nov 2026. A start date that is not a Monday still ends on a Sunday.
 
