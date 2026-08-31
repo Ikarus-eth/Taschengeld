@@ -122,6 +122,13 @@ that is not a site failure. Use `raw.githubusercontent.com`, which is allowliste
   vocabulary. Each of the nine basket companies has a "where you have seen it" line, and
   the concept ladder is company → share → basket → the 50% match. If a new instrument is
   added it needs the same treatment or it will not be understood.
+- **The deadline is the Sunday that closes the last week**, `monday(start)+weeks*7-1`.
+  Never `start + weeks*7`: a start date that is not a Monday would then land the deadline
+  mid-week, and the whole engine counts Monday-to-Sunday weeks.
+- **Deadline copy has three states and never nags.** Before the start, during, and after.
+  Once the time is up the wording states what happened rather than continuing to ask, and
+  says that what was already earned is still hers. Missing a goal should not feel like a
+  debt.
 - **The word bonus is a weekly checkbox for the child**, not a number only a parent can
   enter: 10 marked words fills the week's €1 cap. This week and last week are tappable.
 - **Pocket money is unconditional** and strictly separate from challenge payouts. It is
