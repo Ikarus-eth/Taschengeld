@@ -1,0 +1,637 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-title" content="Challenges">
+<meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate">
+<meta http-equiv="Pragma" content="no-cache">
+<meta http-equiv="Expires" content="0">
+<title>Challenges</title>
+<style>
+:root{
+  --paper:#F3F5F0; --card:#FFFFFF; --ink:#1B2118; --ink-soft:#5C665A; --line:#D9DED6;
+  --gold:#B07D18; --gold-soft:#F6EBD2;
+  --juna:#7A3E9D; --juna-soft:#EFE5F6; --artus:#1F7A5C; --artus-soft:#DFF0E8;
+  --warn:#A33B2A; --accent:var(--juna); --accent-soft:var(--juna-soft); --r:14px;
+}
+body.artus{--accent:var(--artus);--accent-soft:var(--artus-soft);}
+*{box-sizing:border-box;-webkit-tap-highlight-color:transparent;}
+html,body{margin:0;padding:0;}
+body{background:var(--paper);color:var(--ink);
+  font-family:ui-rounded,"SF Pro Rounded",-apple-system,BlinkMacSystemFont,system-ui,sans-serif;
+  font-size:17px;line-height:1.45;padding-bottom:96px;-webkit-text-size-adjust:100%;}
+.wrap{max-width:760px;margin:0 auto;padding:0 16px;}
+.num{font-variant-numeric:tabular-nums;}
+header{padding:14px 0 6px;}
+.kidtabs{display:flex;gap:8px;}
+.kidtab{flex:1;border:1.5px solid var(--line);background:var(--card);border-radius:var(--r);
+  padding:12px 10px;font-size:19px;font-weight:600;color:var(--ink-soft);cursor:pointer;font-family:inherit;}
+.kidtab[aria-selected="true"]{border-color:var(--accent);background:var(--accent-soft);color:var(--ink);}
+.hero{background:var(--card);border:1.5px solid var(--line);border-radius:var(--r);padding:18px;margin-top:14px;}
+.hero h1{margin:0 0 2px;font-size:15px;font-weight:600;color:var(--ink-soft);}
+.big{font-size:46px;font-weight:700;line-height:1.05;letter-spacing:-.02em;}
+.bar{height:14px;border-radius:7px;background:var(--paper);border:1px solid var(--line);
+  overflow:hidden;display:flex;margin:14px 0 10px;}
+.bar i{display:block;height:100%;}
+.bar .b1{background:var(--gold);} .bar .b2{background:var(--accent);opacity:.32;}
+.legend{display:flex;justify-content:space-between;font-size:14px;color:var(--ink-soft);gap:8px;}
+.legend b{display:block;color:var(--ink);font-size:17px;font-weight:700;}
+.dot{width:9px;height:9px;border-radius:50%;display:inline-block;margin-right:6px;vertical-align:1px;}
+section{margin-top:22px;}
+h2{font-size:15px;font-weight:700;color:var(--ink-soft);margin:0 0 10px;}
+.card{background:var(--card);border:1.5px solid var(--line);border-radius:var(--r);padding:16px;}
+.row{display:flex;align-items:center;gap:12px;padding:12px 0;border-top:1px solid var(--line);}
+.row:first-child{border-top:0;}
+.row .grow{flex:1;min-width:0;}
+.sub{font-size:14px;color:var(--ink-soft);}
+.money{font-weight:700;font-variant-numeric:tabular-nums;white-space:nowrap;}
+.muted{color:var(--ink-soft);}
+button{font-family:inherit;font-size:17px;cursor:pointer;}
+:focus-visible{outline:3px solid var(--accent);outline-offset:2px;}
+.btn{border:1.5px solid var(--ink);background:var(--ink);color:#fff;border-radius:12px;
+  padding:12px 18px;font-weight:600;min-height:48px;}
+.btn.ghost{background:transparent;color:var(--ink);border-color:var(--line);}
+.btn.small{padding:8px 14px;min-height:40px;font-size:15px;}
+.btn:disabled{opacity:.4;cursor:default;}
+.today{background:var(--card);border:1.5px solid var(--line);border-radius:var(--r);padding:18px;text-align:center;}
+.stamps{display:flex;gap:10px;}
+.stamp{flex:1;min-height:118px;border-radius:16px;border:2.5px dashed var(--line);background:var(--paper);
+  color:var(--ink-soft);font-size:19px;font-weight:700;display:flex;flex-direction:column;
+  align-items:center;justify-content:center;gap:3px;padding:8px;}
+.stamp.done{border-style:solid;border-color:var(--accent);background:var(--accent-soft);color:var(--ink);}
+.stamp.bonus.done{border-color:var(--gold);background:var(--gold-soft);}
+.stamp .mins{font-size:14px;font-weight:600;color:var(--ink-soft);}
+.weekdots{display:flex;justify-content:space-between;gap:6px;margin-top:14px;}
+.wd{flex:1;text-align:center;font-size:13px;color:var(--ink-soft);}
+.wd i{display:block;height:34px;border-radius:9px;border:1.5px solid var(--line);background:var(--paper);margin-bottom:4px;}
+.wd.on i{background:var(--accent);border-color:var(--accent);}
+.wd.plus i{background:var(--gold);border-color:var(--gold);}
+.wd.today i{border-color:var(--ink);border-width:2.5px;}
+.stairs{display:flex;align-items:flex-end;gap:3px;height:150px;padding-top:8px;}
+.st{flex:1;display:flex;flex-direction:column;justify-content:flex-end;height:100%;}
+.st i{display:block;border-radius:4px 4px 0 0;border:1.5px solid var(--line);border-bottom:0;background:var(--paper);}
+.st.won i{background:var(--gold);border-color:var(--gold);}
+.st.now i{border-color:var(--ink);border-width:2px;border-bottom:0;}
+.st.miss i{background:repeating-linear-gradient(45deg,var(--paper),var(--paper) 3px,#E6E2D6 3px,#E6E2D6 6px);}
+.stairlabels{display:flex;justify-content:space-between;font-size:13px;color:var(--ink-soft);margin-top:6px;}
+.check{width:34px;height:34px;border-radius:10px;border:2px solid var(--line);background:var(--paper);flex:none;}
+.check.on{background:var(--accent);border-color:var(--accent);position:relative;}
+.check.on::after{content:"";position:absolute;left:11px;top:5px;width:8px;height:16px;
+  border:solid #fff;border-width:0 3px 3px 0;transform:rotate(42deg);}
+.holding{display:flex;gap:12px;align-items:center;padding:12px 0;border-top:1px solid var(--line);}
+.holding:first-child{border-top:0;}
+.mini{height:6px;border-radius:3px;background:var(--paper);border:1px solid var(--line);overflow:hidden;margin-top:6px;}
+.mini i{display:block;height:100%;background:var(--gold);}
+.grid3{display:grid;grid-template-columns:repeat(3,1fr);gap:8px;}
+.choice{border:1.5px solid var(--line);background:var(--card);border-radius:12px;padding:12px 8px;
+  text-align:center;font-weight:600;font-size:15px;color:var(--ink);}
+.choice[aria-pressed="true"]{border-color:var(--accent);background:var(--accent-soft);}
+.choice[disabled]{opacity:.45;}
+.choice .pct{display:block;font-size:13px;font-weight:600;color:var(--ink-soft);margin-top:2px;}
+.baskets{display:flex;flex-wrap:wrap;gap:6px;margin-top:10px;}
+.chipco{font-size:13px;padding:4px 9px;border-radius:999px;background:var(--paper);
+  border:1px solid var(--line);color:var(--ink-soft);}
+.chipco b{color:var(--ink);font-weight:600;}
+nav{position:fixed;left:0;right:0;bottom:0;background:rgba(255,255,255,.96);
+  border-top:1.5px solid var(--line);display:flex;padding-bottom:env(safe-area-inset-bottom);backdrop-filter:blur(8px);}
+nav button{flex:1;background:none;border:0;padding:11px 4px 13px;font-size:12px;font-weight:600;
+  color:var(--ink-soft);display:flex;flex-direction:column;align-items:center;gap:3px;}
+nav button[aria-selected="true"]{color:var(--accent);}
+nav .ico{font-size:21px;line-height:1;}
+dialog{border:0;border-radius:18px;padding:0;max-width:460px;width:calc(100% - 28px);
+  box-shadow:0 12px 44px rgba(27,33,24,.24);color:var(--ink);}
+dialog::backdrop{background:rgba(27,33,24,.42);}
+.dlg{padding:20px;}
+.dlg h3{margin:0 0 4px;font-size:21px;}
+label{display:block;font-size:14px;font-weight:600;color:var(--ink-soft);margin:14px 0 5px;}
+input,select{width:100%;font-family:inherit;font-size:17px;padding:12px;border-radius:11px;
+  border:1.5px solid var(--line);background:var(--paper);color:var(--ink);}
+.dlgbtns{display:flex;gap:8px;margin-top:18px;}
+.dlgbtns .btn{flex:1;}
+.foot{font-size:13px;color:var(--ink-soft);text-align:center;margin:26px 0 8px;}
+.warnbox{background:var(--gold-soft);border:1.5px solid #E8D6AE;border-radius:12px;padding:12px;font-size:14px;margin-top:12px;}
+table{width:100%;border-collapse:collapse;font-size:15px;}
+td{padding:7px 0;border-top:1px solid var(--line);}
+td:last-child{text-align:right;font-variant-numeric:tabular-nums;font-weight:600;}
+tr:first-child td{border-top:0;}
+.feedlog{font-size:13px;color:var(--ink-soft);margin-top:10px;white-space:pre-line;}
+@media (prefers-reduced-motion:no-preference){
+  .stamp,.check,.wd i,.st i{transition:background-color .18s ease,border-color .18s ease;}
+}
+</style>
+</head>
+<body>
+<div class="wrap">
+  <header>
+    <div class="kidtabs" role="tablist">
+      <button class="kidtab" role="tab" id="tabJuna" onclick="setKid('juna')">Juna</button>
+      <button class="kidtab" role="tab" id="tabArtus" onclick="setKid('artus')">Artus</button>
+    </div>
+  </header>
+  <main id="view"></main>
+  <p class="foot" id="foot"></p>
+</div>
+<nav role="tablist">
+  <button role="tab" data-v="heute" onclick="setView('heute')"><span class="ico">📖</span>Heute</button>
+  <button role="tab" data-v="ziele" onclick="setView('ziele')"><span class="ico">🎯</span>Ziele</button>
+  <button role="tab" data-v="geld" onclick="setView('geld')"><span class="ico">💰</span>Geld</button>
+  <button role="tab" data-v="sparen" onclick="setView('sparen')"><span class="ico">📈</span>Sparen</button>
+  <button role="tab" data-v="eltern" onclick="askPin()"><span class="ico">🔑</span>Eltern</button>
+</nav>
+<dialog id="dlg"><div class="dlg" id="dlgBody"></div></dialog>
+<script>
+"use strict";
+const DAY=86400000, KEY="challenges_v2";
+
+const RATES={
+  juna:[2,2,2,2, 4,4,4,4, 5,5,5,5, 6,6,6,6, 8,8,8,8],
+  artus:[1,1,1, 1.5,1.5,1.5, 2,2,2,2]
+};
+const BOOKS={juna:[4,7,10,14], artus:[2,2,2,2,2]};
+const COMPANIES=["Alphabet","Microsoft","SpaceX","NVIDIA","Apple","Amazon","TSMC","Meta","Tesla"];
+const TICKER={Alphabet:"GOOGL",Microsoft:"MSFT",SpaceX:null,NVIDIA:"NVDA",Apple:"AAPL",
+  Amazon:"AMZN",TSMC:"TSM",Meta:"META",Tesla:"TSLA"};
+const INSTR={btc:{name:"Bitcoin",icon:"₿"}, etf:{name:"Welt-ETF",icon:"🌍"}, basket:{name:"Zukunfts-Korb",icon:"🚀"}};
+
+function slot(sym){ return {px:null, base:null, sym:sym||null}; }
+function fresh(){
+  return {
+    v:2, fx:17500, pin:"1234",
+    feed:{key:"", updated:null, usdPerEur:1.08, log:""},
+    prices:{ btc:slot("BTC"), etf:slot("URTH"),
+      basket:Object.fromEntries(COMPANIES.map(c=>[c, TICKER[c]?slot(TICKER[c]):{px:100,base:100,sym:null}])) },
+    kids:{
+      juna:{ name:"Juna", start:"2026-09-07", weeks:20, minDays:5, minutes:20,
+        bonusMinutes:0, bonusDays:0, bonusEur:0,
+        allowance:20, allowanceEvery:"month",
+        bookMin:"ab 200 Seiten, selbst ausgesucht", wordRate:0.10, wordCap:1,
+        milestones:[
+          {id:"h3",label:"Handstand 3 Sekunden (3x an einem Tag)",eur:20,done:null},
+          {id:"h10",label:"Handstand 10 Sekunden",eur:80,done:null},
+          {id:"hw",label:"10 Schritte auf den Händen",eur:50,done:null}],
+        days:{}, books:[], words:{}, spend:[], deposits:[], payouts:[] },
+      artus:{ name:"Artus", start:"2026-09-07", weeks:10, minDays:5, minutes:10,
+        bonusMinutes:15, bonusDays:4, bonusEur:1,
+        allowance:2, allowanceEvery:"week",
+        bookMin:"Erstlesebuch, alle 2 Wochen eins", wordRate:0, wordCap:0,
+        milestones:[],
+        days:{}, books:[], words:{}, spend:[], deposits:[], payouts:[] }
+    }
+  };
+}
+
+let S=load(), KID="juna", VIEW="heute", CUR="EUR", BUY="basket";
+
+function load(){
+  try{
+    const raw=localStorage.getItem(KEY)||localStorage.getItem("challenges_v1");
+    if(!raw) return fresh();
+    const p=JSON.parse(raw), f=fresh(), out=Object.assign({},f,p);
+    out.feed=Object.assign({},f.feed,p.feed||{});
+    out.prices=Object.assign({},f.prices);
+    for(const k of ["btc","etf"]) if(p.prices&&typeof p.prices[k]==="object"&&p.prices[k].px!==undefined) out.prices[k]=p.prices[k];
+    out.prices.basket=Object.assign({},f.prices.basket);
+    if(p.prices&&p.prices.basket) for(const c of COMPANIES){
+      const v=p.prices.basket[c];
+      if(v&&typeof v==="object"&&v.px!==undefined) out.prices.basket[c]=Object.assign({},f.prices.basket[c],v);
+    }
+    out.kids={};
+    for(const k of ["juna","artus"]){
+      const kid=Object.assign({},f.kids[k],(p.kids||{})[k]||{});
+      const d={};
+      for(const key in (kid.days||{})){ const val=kid.days[key]; d[key]= val===true? kid.minutes : Number(val)||0; }
+      kid.days=d;
+      for(const dep of (kid.deposits||[])) if(dep.px===undefined) dep.px=dep.idx||100;
+      out.kids[k]=kid;
+    }
+    return out;
+  }catch(e){ return fresh(); }
+}
+function save(){ try{ localStorage.setItem(KEY,JSON.stringify(S)); }
+  catch(e){ alert("Speichern hat nicht geklappt."); } }
+
+const iso=d=>{const x=new Date(d);return x.getFullYear()+"-"+String(x.getMonth()+1).padStart(2,"0")+"-"+String(x.getDate()).padStart(2,"0");};
+function monday(d){const x=new Date(d);x.setHours(12,0,0,0);const g=(x.getDay()+6)%7;x.setDate(x.getDate()-g);return x;}
+function today(){const x=new Date();x.setHours(12,0,0,0);return x;}
+function addD(d,n){const x=new Date(d);x.setDate(x.getDate()+n);return x;}
+const WD=["Mo","Di","Mi","Do","Fr","Sa","So"];
+const K=k=>S.kids[k||KID];
+function weekIndex(k,d){ return Math.floor((monday(d)-monday(new Date(K(k).start+"T12:00:00")))/(7*DAY)); }
+function dshort(d){ const x=new Date(d+"T12:00:00"); return x.getDate()+"."+(x.getMonth()+1)+"."; }
+
+function fmt(eur){
+  if(CUR==="IDR") return (Math.round(eur*S.fx/100)*100).toLocaleString("de-DE")+" Rp";
+  return (Math.round(eur*100)/100).toFixed(2).replace(".",",").replace(/,00$/,"")+" €";
+}
+function pct(n){ return (n>=0?"+":"−")+Math.abs(n).toFixed(1).replace(".",",")+" %"; }
+
+/* ---- prices ---- */
+function level(inst){
+  if(inst==="basket"){
+    const v=COMPANIES.map(c=>{const s=S.prices.basket[c];
+      return (s.px&&s.base)? s.px/s.base*100 : 100;});
+    return v.reduce((a,b)=>a+b,0)/v.length;
+  }
+  const s=S.prices[inst];
+  return s.px||null;
+}
+function levelPct(inst){
+  if(inst==="basket") return level("basket");
+  const s=S.prices[inst];
+  return (s.px&&s.base)? s.px/s.base*100 : null;
+}
+function tradable(inst){ return inst==="basket" || level(inst)>0; }
+
+async function fetchPrices(){
+  const log=[];
+  try{
+    const r=await fetch("https://api.frankfurter.app/latest?from=EUR&to=USD,IDR");
+    const j=await r.json();
+    if(j&&j.rates){
+      if(j.rates.USD) S.feed.usdPerEur=j.rates.USD;
+      if(j.rates.IDR) S.fx=Math.round(j.rates.IDR);
+      log.push("Wechselkurse ✓ (1 € = "+S.fx.toLocaleString("de-DE")+" Rp)");
+    } else log.push("Wechselkurse ✗");
+  }catch(e){ log.push("Wechselkurse ✗ — alter Kurs bleibt"); }
+
+  try{
+    const r=await fetch("https://api.coinbase.com/v2/prices/BTC-EUR/spot");
+    const j=await r.json();
+    const p=Number(j&&j.data&&j.data.amount);
+    if(p>0){ setPx(S.prices.btc,p); log.push("Bitcoin ✓ "+Math.round(p).toLocaleString("de-DE")+" €"); }
+    else log.push("Bitcoin ✗");
+  }catch(e){ log.push("Bitcoin ✗ — alter Kurs bleibt"); }
+
+  const key=(S.feed.key||"").trim();
+  if(!key){ log.push("Aktien übersprungen — kein Finnhub-Schlüssel hinterlegt"); }
+  else{
+    const jobs=[["Welt-ETF",S.prices.etf]];
+    for(const c of COMPANIES) if(TICKER[c]) jobs.push([c,S.prices.basket[c]]);
+    let ok=0, bad=[];
+    for(const pair of jobs){
+      const nm=pair[0], sl=pair[1];
+      try{
+        const r=await fetch("https://finnhub.io/api/v1/quote?symbol="+encodeURIComponent(sl.sym)+"&token="+encodeURIComponent(key));
+        const j=await r.json();
+        const usd=Number(j&&j.c);
+        if(usd>0){ setPx(sl, usd/S.feed.usdPerEur); ok++; } else bad.push(nm);
+      }catch(e){ bad.push(nm); }
+      await new Promise(res=>setTimeout(res,150));
+    }
+    log.push("Aktien: "+ok+" von "+jobs.length+" geholt"+(bad.length?" — fehlt: "+bad.join(", "):""));
+  }
+  log.push("SpaceX bleibt Handarbeit — nicht börsennotiert.");
+  S.feed.updated=new Date().toISOString();
+  S.feed.log=log.join("\n");
+  save(); render();
+}
+function setPx(sl,px){ sl.px=px; if(!sl.base) sl.base=px; }
+
+/* ---- engine ---- */
+function weekStats(k){
+  const kid=K(k), out=[], m0=monday(new Date(kid.start+"T12:00:00")), nowWi=weekIndex(k,today());
+  let rank=0;
+  for(let i=0;i<kid.weeks;i++){
+    const ws=addD(m0,i*7);
+    let n=0, nb=0;
+    for(let d=0;d<7;d++){
+      const m=kid.days[iso(addD(ws,d))]||0;
+      if(m>=kid.minutes) n++;
+      if(kid.bonusMinutes && m>=kid.bonusMinutes) nb++;
+    }
+    const done=n>=kid.minDays;
+    const bonus = kid.bonusMinutes? nb>=kid.bonusDays : false;
+    if(done) rank++;
+    out.push({i,start:ws,days:n,bonusDays:nb,done,bonus,past:i<nowWi,current:i===nowWi,
+      rate:done?(RATES[k][rank-1]||0):0, rank:done?rank:null});
+  }
+  return {weeks:out, qualified:rank, nowWi};
+}
+function calc(k){
+  const kid=K(k), ws=weekStats(k);
+  const weekEur=ws.weeks.reduce((s,w)=>s+w.rate,0);
+  const bonusEur=ws.weeks.reduce((s,w)=>s+(w.bonus?kid.bonusEur:0),0);
+  let remain=0, remainB=0;
+  for(const w of ws.weeks){ if(!w.past||w.current){ if(!w.done) remain++; if(!w.bonus) remainB++; } }
+  let futureWeek=0;
+  for(let j=0;j<remain;j++) futureWeek+=RATES[k][ws.qualified+j]||0;
+  const bonusLeft=remainB*kid.bonusEur;
+
+  const bookEur=kid.books.reduce((s,b,i)=>s+(BOOKS[k][i]||0),0);
+  const bookLeft=BOOKS[k].slice(kid.books.length).reduce((a,b)=>a+b,0);
+  let wordEur=0;
+  for(const key in kid.words) wordEur+=Math.min(kid.words[key]*kid.wordRate,kid.wordCap);
+  const wordLeft=kid.wordRate? remain*kid.wordCap : 0;
+  const msEur=kid.milestones.filter(m=>m.done).reduce((s,m)=>s+m.eur,0);
+  const msLeft=kid.milestones.filter(m=>!m.done).reduce((s,m)=>s+m.eur,0);
+
+  const earned=weekEur+bonusEur+bookEur+wordEur+msEur;
+  const open=futureWeek+bonusLeft+bookLeft+wordLeft+msLeft;
+
+  const st=new Date(kid.start+"T12:00:00"), t=today();
+  let periods=0;
+  if(t>=st) periods = kid.allowanceEvery==="week"? Math.floor((t-st)/(7*DAY))+1
+    : (t.getFullYear()-st.getFullYear())*12+(t.getMonth()-st.getMonth())+1;
+  const allowance=Math.max(0,periods)*kid.allowance;
+  const spent=kid.spend.reduce((s,x)=>s+x.eur,0);
+  const paidOut=kid.payouts.reduce((s,x)=>s+x.eur,0);
+  const inv=invested(k);
+  const cash=earned+allowance+inv.matchPaid+inv.proceeds-spent-inv.principalOpen-paidOut;
+  return {ws,weekEur,bonusEur,bonusLeft,futureWeek,bookEur,bookLeft,wordEur,wordLeft,
+    msEur,msLeft,earned,open,allowance,spent,paidOut,cash,remain,inv};
+}
+function invested(k){
+  const kid=K(k), t=Date.now();
+  let principalOpen=0,value=0,matchPaid=0,matchOpen=0,proceeds=0; const open=[];
+  for(const d of kid.deposits){
+    const vested = t-new Date(d.date+"T12:00:00").getTime() >= 365*DAY;
+    if(d.sold){ proceeds+=d.soldValue||0; if(d.matchClaimed) matchPaid+=d.eur*0.5; continue; }
+    const now=level(d.instrument)||d.px;
+    const val=d.eur*(now/d.px);
+    principalOpen+=d.eur; value+=val;
+    if(vested) matchPaid+=d.eur*0.5; else matchOpen+=d.eur*0.5;
+    open.push(Object.assign({},d,{value:val,vested,
+      daysLeft:Math.max(0,Math.ceil((new Date(d.date+"T12:00:00").getTime()+365*DAY-t)/DAY))}));
+  }
+  return {principalOpen,value,matchPaid,matchOpen,proceeds,open};
+}
+
+/* ---- views ---- */
+function setKid(k){ KID=k; render(); }
+function setView(v){ VIEW=v; render(); }
+function toggleCur(){ CUR=CUR==="EUR"?"IDR":"EUR"; render(); }
+function render(){
+  document.body.className=KID;
+  tabJuna.setAttribute("aria-selected",KID==="juna");
+  tabArtus.setAttribute("aria-selected",KID==="artus");
+  document.querySelectorAll("nav button").forEach(b=>b.setAttribute("aria-selected",b.dataset.v===VIEW));
+  const c=calc(KID);
+  view.innerHTML = VIEW==="heute"?vHeute(c): VIEW==="ziele"?vZiele(c): VIEW==="geld"?vGeld(c)
+    : VIEW==="sparen"?vSparen(c): vEltern(c);
+  foot.innerHTML='1 € = '+S.fx.toLocaleString("de-DE")+' Rp · <a href="#" onclick="toggleCur();return false;" style="color:inherit">in '+(CUR==="EUR"?"Rupiah":"Euro")+' zeigen</a>';
+}
+function hero(c){
+  const max=c.earned+c.open, pe=max?c.earned/max*100:0, po=max?c.open/max*100:0;
+  return '<div class="hero"><h1>Bis jetzt verdient</h1>'+
+   '<div class="big num">'+fmt(c.earned)+'</div>'+
+   '<div class="bar"><i class="b1" style="width:'+pe+'%"></i><i class="b2" style="width:'+po+'%"></i></div>'+
+   '<div class="legend"><div><span class="dot" style="background:var(--gold)"></span>verdient<b class="num">'+fmt(c.earned)+'</b></div>'+
+   '<div><span class="dot" style="background:var(--accent);opacity:.4"></span>noch möglich<b class="num">'+fmt(c.open)+'</b></div>'+
+   '<div style="text-align:right">insgesamt<b class="num">'+fmt(max)+'</b></div></div></div>';
+}
+function vHeute(c){
+  const kid=K(), t=today(), tk=iso(t), m=kid.days[tk]||0, m0=monday(t);
+  const dots=WD.map((w,i)=>{
+    const d=addD(m0,i), key=iso(d), mm=kid.days[key]||0;
+    const cls=(kid.bonusMinutes&&mm>=kid.bonusMinutes)?"plus":(mm>=kid.minutes?"on":"");
+    return '<div class="wd '+cls+' '+(key===tk?"today":"")+'"><i></i>'+w+'</div>';
+  }).join("");
+  let stampHtml;
+  if(kid.bonusMinutes){
+    stampHtml='<div class="stamps">'+
+      '<button class="stamp '+(m>=kid.minutes&&m<kid.bonusMinutes?"done":"")+'" onclick="logDay('+kid.minutes+')">'+
+        kid.minutes+' Minuten<span class="mins">laut vorlesen</span></button>'+
+      '<button class="stamp bonus '+(m>=kid.bonusMinutes?"done":"")+'" onclick="logDay('+kid.bonusMinutes+')">'+
+        kid.bonusMinutes+' Minuten<span class="mins">extra lang</span></button></div>';
+  } else {
+    stampHtml='<button class="stamp '+(m>=kid.minutes?"done":"")+'" onclick="logDay('+kid.minutes+')">'+
+      (m>=kid.minutes?"✓ Heute gelesen":"Heute gelesen?")+'<span class="mins">'+kid.minutes+' Minuten</span></button>';
+  }
+  const wi=weekIndex(KID,t), wk=c.ws.weeks[wi];
+  let msg;
+  if(!wk) msg="Diese Woche gehört nicht zur Challenge.";
+  else{
+    const need=Math.max(0,kid.minDays-wk.days);
+    msg = wk.done? "Woche geschafft — "+fmt(RATES[KID][wk.rank-1]||0)+" verdient."
+      : "Noch "+need+(need===1?" Tag":" Tage")+" bis diese Woche zählt.";
+    if(kid.bonusMinutes){
+      const nb=Math.max(0,kid.bonusDays-wk.bonusDays);
+      msg += wk.bonus? " Extra-Bonus von "+fmt(kid.bonusEur)+" ist auch drin."
+        : " Noch "+nb+"x "+kid.bonusMinutes+" Minuten für "+fmt(kid.bonusEur)+" extra.";
+    }
+  }
+  return hero(c)+'<section><h2>Heute</h2><div class="today">'+stampHtml+
+    '<div class="weekdots">'+dots+'</div><p class="sub" style="margin:12px 0 0">'+msg+'</p></div></section>'+stairs(c);
+}
+function stairs(c){
+  const maxR=Math.max.apply(null,RATES[KID]);
+  const bars=c.ws.weeks.map(w=>{
+    const h=Math.max(10,(RATES[KID][w.i]/maxR)*100);
+    const cls=w.done?"won":(w.past?"miss":"");
+    return '<div class="st '+cls+' '+(w.current?"now":"")+'"><i style="height:'+h+'%"></i></div>';
+  }).join("");
+  return '<section><h2>Die Wochen-Treppe</h2><div class="card"><div class="stairs">'+bars+'</div>'+
+   '<div class="stairlabels"><span>Woche 1 · '+fmt(RATES[KID][0])+'</span><span>Woche '+K().weeks+' · '+fmt(RATES[KID][K().weeks-1])+'</span></div>'+
+   '<p class="sub" style="margin:10px 0 0">'+c.ws.qualified+' von '+K().weeks+
+   ' Wochen geschafft. Verpasste Wochen kosten nichts — es dauert dann nur länger bis zur höchsten Stufe.</p></div></section>';
+}
+function vZiele(c){
+  const kid=K();
+  const ms=kid.milestones.length? '<section><h2>Sport</h2><div class="card">'+
+    kid.milestones.map(m=>'<div class="row"><div class="check '+(m.done?"on":"")+'"></div>'+
+    '<div class="grow"><div>'+m.label+'</div>'+(m.done?'<div class="sub">geschafft am '+dshort(m.done)+'</div>':'')+
+    '</div><div class="money">'+fmt(m.eur)+'</div></div>').join("")+'</div></section>' : "";
+  const bk=BOOKS[KID].map((eur,i)=>{
+    const b=kid.books[i];
+    return '<div class="row"><div class="check '+(b?"on":"")+'"></div><div class="grow"><div>'+
+      (b?b.title:(i+1)+". Buch")+'</div><div class="sub">'+(b?dshort(b.date):kid.bookMin)+
+      '</div></div><div class="money">'+fmt(eur)+'</div></div>';
+  }).join("");
+  const bonus = kid.bonusMinutes? '<section><h2>Extra-Bonus</h2><div class="card"><div class="row">'+
+    '<div class="grow"><div>'+kid.bonusDays+'x '+kid.bonusMinutes+' Minuten in einer Woche</div>'+
+    '<div class="sub">'+c.ws.weeks.filter(w=>w.bonus).length+' Wochen mit Bonus bisher</div></div>'+
+    '<div class="money">'+fmt(c.bonusEur)+'</div></div></div></section>' : "";
+  const words = kid.wordRate? '<section><h2>Unbekannte Wörter</h2><div class="card"><div class="row">'+
+    '<div class="grow"><div>'+Object.values(kid.words).reduce((a,b)=>a+b,0)+' Wörter angestrichen</div>'+
+    '<div class="sub">10 Cent pro Wort, höchstens '+fmt(kid.wordCap)+' pro Woche</div></div>'+
+    '<div class="money">'+fmt(c.wordEur)+'</div></div></div></section>' : "";
+  return hero(c)+ms+'<section><h2>Bücher</h2><div class="card">'+bk+'</div></section>'+bonus+words;
+}
+function vGeld(c){
+  const kid=K();
+  const sp=kid.spend.slice().reverse().slice(0,12).map(x=>
+    '<div class="row"><div class="grow"><div>'+(x.label||"Ausgabe")+'</div><div class="sub">'+dshort(x.date)+
+    '</div></div><div class="money">− '+fmt(x.eur)+'</div></div>').join("")
+    || '<p class="sub" style="margin:0">Noch nichts ausgegeben.</p>';
+  return '<div class="hero"><h1>Dein Guthaben</h1><div class="big num" style="color:'+(c.cash<0?"var(--warn)":"inherit")+'">'+fmt(c.cash)+'</div>'+
+   '<div class="legend" style="margin-top:14px"><div>eingenommen<b class="num">'+fmt(c.earned+c.allowance+c.inv.matchPaid+c.inv.proceeds)+'</b></div>'+
+   '<div>ausgegeben<b class="num">'+fmt(c.spent)+'</b></div>'+
+   '<div style="text-align:right">angelegt<b class="num">'+fmt(c.inv.principalOpen)+'</b></div></div></div>'+
+   '<section><h2>Woher das Geld kommt</h2><div class="card"><table>'+
+   '<tr><td>Lesen, Woche für Woche</td><td>'+fmt(c.weekEur)+'</td></tr>'+
+   (kid.bonusMinutes?'<tr><td>Extra-Bonus</td><td>'+fmt(c.bonusEur)+'</td></tr>':'')+
+   '<tr><td>Bücher</td><td>'+fmt(c.bookEur)+'</td></tr>'+
+   (kid.wordRate?'<tr><td>Unbekannte Wörter</td><td>'+fmt(c.wordEur)+'</td></tr>':'')+
+   (kid.milestones.length?'<tr><td>Sport-Ziele</td><td>'+fmt(c.msEur)+'</td></tr>':'')+
+   '<tr><td>Taschengeld</td><td>'+fmt(c.allowance)+'</td></tr>'+
+   (c.inv.matchPaid?'<tr><td>Spar-Bonus von Papa</td><td>'+fmt(c.inv.matchPaid)+'</td></tr>':'')+
+   (c.paidOut?'<tr><td>schon ausgezahlt</td><td>− '+fmt(c.paidOut)+'</td></tr>':'')+
+   '</table></div></section>'+
+   '<section><h2>Ausgaben</h2><div class="card">'+sp+
+   '<div style="margin-top:14px"><button class="btn ghost" onclick="addSpend()">Ausgabe eintragen</button></div></div></section>';
+}
+function vSparen(c){
+  const inv=c.inv;
+  const choices=Object.keys(INSTR).map(k=>{
+    const p=levelPct(k), can=tradable(k);
+    return '<button class="choice" aria-pressed="'+(BUY===k)+'" '+(can?'':'disabled')+' onclick="BUY=\''+k+'\';render()">'+
+      INSTR[k].icon+' '+INSTR[k].name+'<span class="pct">'+(p?pct(p-100):"kein Kurs")+'</span></button>';
+  }).join("");
+  const chips=COMPANIES.map(cn=>{
+    const s=S.prices.basket[cn], p=(s.px&&s.base)?s.px/s.base*100:100;
+    return '<span class="chipco">'+cn+' <b>'+pct(p-100)+'</b></span>';
+  }).join("");
+  const hold=inv.open.map(d=>{
+    const p=(d.value/d.eur-1)*100;
+    return '<div class="holding"><div style="font-size:24px">'+INSTR[d.instrument].icon+'</div>'+
+     '<div class="grow"><div>'+INSTR[d.instrument].name+' · '+fmt(d.eur)+' angelegt</div>'+
+     '<div class="sub">'+(d.vested?"Bonus ausgezahlt":"noch "+d.daysLeft+" Tage bis zum 50 % Bonus")+'</div>'+
+     '<div class="mini"><i style="width:'+(d.vested?100:Math.round((365-d.daysLeft)/365*100))+'%"></i></div></div>'+
+     '<div style="text-align:right"><div class="money">'+fmt(d.value)+'</div><div class="sub">'+pct(p)+'</div></div></div>';
+  }).join("") || '<p class="sub" style="margin:0">Noch nichts angelegt.</p>';
+  const stamp=S.feed.updated? "Kurse vom "+new Date(S.feed.updated).toLocaleString("de-DE",{day:"numeric",month:"numeric",hour:"2-digit",minute:"2-digit"}) : "Noch keine Kurse geholt";
+  return '<div class="hero"><h1>Angelegt</h1><div class="big num">'+fmt(inv.value)+'</div>'+
+   '<div class="legend" style="margin-top:14px"><div>eingezahlt<b class="num">'+fmt(inv.principalOpen)+'</b></div>'+
+   '<div>Bonus schon da<b class="num">'+fmt(inv.matchPaid)+'</b></div>'+
+   '<div style="text-align:right">Bonus kommt noch<b class="num">'+fmt(inv.matchOpen)+'</b></div></div></div>'+
+   '<section><h2>Wo willst du sparen?</h2><div class="grid3">'+choices+'</div>'+
+   (BUY==="basket"?'<div class="baskets">'+chips+'</div>':'')+
+   '<div style="margin-top:12px;display:flex;gap:8px;flex-wrap:wrap">'+
+   '<button class="btn" onclick="addDeposit()">Geld anlegen</button>'+
+   '<button class="btn ghost" onclick="explainMatch()">Wie geht der Bonus?</button></div>'+
+   '<p class="sub" style="margin:10px 0 0">'+stamp+'</p>'+
+   '<div class="warnbox">Wer sein Geld ein ganzes Jahr liegen lässt, bekommt <b>50 % obendrauf</b>. Wer vorher verkauft, bekommt den Bonus nicht.</div></section>'+
+   '<section><h2>Deine Anlagen</h2><div class="card">'+hold+'</div></section>';
+}
+function askPin(){
+  dlgBody.innerHTML='<h3>Eltern</h3><label>PIN</label><input id="pinIn" type="password" inputmode="numeric" autocomplete="off">'+
+   '<div class="dlgbtns"><button class="btn ghost" onclick="dlg.close()">Abbrechen</button>'+
+   '<button class="btn" onclick="if(pinIn.value===S.pin){dlg.close();setView(\'eltern\')}else{pinIn.value=\'\';pinIn.placeholder=\'falsch\'}">Öffnen</button></div>';
+  dlg.showModal(); setTimeout(()=>pinIn.focus(),50);
+}
+function vEltern(c){
+  const kid=K(), inv=c.inv, settle=c.cash+inv.value;
+  const ms=kid.milestones.length? '<section><h2>Sport-Ziele</h2><div class="card">'+kid.milestones.map(m=>
+    '<div class="row"><div class="grow"><div>'+m.label+'</div><div class="sub">'+fmt(m.eur)+(m.done?" · "+dshort(m.done):"")+
+    '</div></div><button class="btn small '+(m.done?"ghost":"")+'" onclick="toggleMs(\''+m.id+'\')">'+
+    (m.done?"zurücknehmen":"erreicht")+'</button></div>').join("")+'</div></section>' : "";
+  const sp=S.prices.basket.SpaceX;
+  return '<section><h2>Abrechnung '+kid.name+'</h2><div class="card"><table>'+
+   '<tr><td>Guthaben (Bargeld)</td><td>'+fmt(c.cash)+'</td></tr>'+
+   '<tr><td>Depotwert</td><td>'+fmt(inv.value)+'</td></tr>'+
+   '<tr><td><b>Auszahlung heute</b></td><td><b>'+fmt(settle)+'</b></td></tr>'+
+   '<tr><td class="muted">Bonus, der noch reift</td><td class="muted">'+fmt(inv.matchOpen)+'</td></tr>'+
+   '<tr><td class="muted">Noch erreichbar in der Challenge</td><td class="muted">'+fmt(c.open)+'</td></tr></table>'+
+   '<div style="margin-top:14px;display:flex;gap:8px;flex-wrap:wrap">'+
+   '<button class="btn small" onclick="addPayout()">Auszahlung buchen</button>'+
+   '<button class="btn small ghost" onclick="addBook()">Buch abhaken</button>'+
+   (kid.wordRate?'<button class="btn small ghost" onclick="addWords()">Wörter eintragen</button>':'')+
+   '</div></div></section>'+ms+
+   '<section><h2>Kurse</h2><div class="card">'+
+   '<div style="display:flex;gap:8px;flex-wrap:wrap"><button class="btn small" onclick="runFeed(this)">Kurse jetzt holen</button>'+
+   '<button class="btn small ghost" onclick="resetBase()">Startwerte auf heute setzen</button></div>'+
+   '<div class="feedlog">'+(S.feed.log||"Noch nichts geholt.")+'</div>'+
+   '<label>Finnhub API-Schlüssel (kostenlos, für Aktien)</label>'+
+   '<input type="text" value="'+(S.feed.key||"")+'" placeholder="leer = nur Bitcoin und Wechselkurse" onchange="S.feed.key=this.value.trim();save()">'+
+   '<label>SpaceX von Hand (100 = Start)</label>'+
+   '<input type="number" step="1" value="'+Math.round((sp.px/sp.base)*100)+'" onchange="S.prices.basket.SpaceX={px:Number(this.value)||100,base:100,sym:null};save();render()">'+
+   '<label>Bitcoin in € (falls der Feed klemmt)</label>'+
+   '<input type="number" step="1" value="'+(S.prices.btc.px||"")+'" onchange="S.prices.btc.px=Number(this.value)||null;if(!S.prices.btc.base)S.prices.btc.base=S.prices.btc.px;save();render()">'+
+   '<label>Welt-ETF in € (falls der Feed klemmt)</label>'+
+   '<input type="number" step="0.01" value="'+(S.prices.etf.px||"")+'" onchange="S.prices.etf.px=Number(this.value)||null;if(!S.prices.etf.base)S.prices.etf.base=S.prices.etf.px;save();render()">'+
+   '<div class="warnbox">Der Schlüssel liegt nur auf diesem Gerät, nie im Repository. Anteile werden zum Kurs am Kauftag gerechnet — Startwerte nachträglich zu ändern verzerrt nur die Prozentanzeige, nicht die Depotwerte.</div></div></section>'+
+   '<section><h2>Einstellungen '+kid.name+'</h2><div class="card">'+
+   '<label>Start der Challenge</label><input type="date" value="'+kid.start+'" onchange="kid_(this.value,\'start\')">'+
+   '<label>Taschengeld pro '+(kid.allowanceEvery==="week"?"Woche":"Monat")+' (€)</label>'+
+   '<input type="number" step="0.5" value="'+kid.allowance+'" onchange="kid_(Number(this.value)||0,\'allowance\')">'+
+   '<label>Minuten pro Tag</label><input type="number" value="'+kid.minutes+'" onchange="kid_(Number(this.value)||10,\'minutes\')">'+
+   (kid.bonusMinutes?'<label>Bonus: Minuten / Tage pro Woche / Euro</label>'+
+     '<div style="display:flex;gap:8px">'+
+     '<input type="number" value="'+kid.bonusMinutes+'" onchange="kid_(Number(this.value)||0,\'bonusMinutes\')">'+
+     '<input type="number" value="'+kid.bonusDays+'" onchange="kid_(Number(this.value)||0,\'bonusDays\')">'+
+     '<input type="number" step="0.5" value="'+kid.bonusEur+'" onchange="kid_(Number(this.value)||0,\'bonusEur\')"></div>':'')+
+   '<label>PIN</label><input type="text" value="'+S.pin+'" onchange="S.pin=this.value||\'1234\';save()">'+
+   '</div></section>'+
+   '<section><h2>Sicherung</h2><div class="card"><div style="display:flex;gap:8px;flex-wrap:wrap">'+
+   '<button class="btn small ghost" onclick="exportJSON()">Daten sichern</button>'+
+   '<button class="btn small ghost" onclick="importJSON()">Sicherung einlesen</button></div>'+
+   '<p class="sub" style="margin:12px 0 0">Alles liegt nur auf diesem iPad. Nach jeder Auszahlung sichern.</p></div></section>';
+}
+
+/* ---- actions ---- */
+function kid_(v,f){ K()[f]=v; save(); render(); }
+function logDay(min){
+  const k=iso(today()), kid=K();
+  if((kid.days[k]||0)===min) delete kid.days[k]; else kid.days[k]=min;
+  save(); render();
+}
+function toggleMs(id){ const m=K().milestones.find(x=>x.id===id); m.done=m.done?null:iso(today()); save(); render(); }
+async function runFeed(btn){ btn.disabled=true; btn.textContent="hole Kurse…"; await fetchPrices(); }
+function resetBase(){
+  if(!confirm("Alle Startwerte auf die heutigen Kurse setzen? Die Prozentanzeige beginnt dann wieder bei 0.")) return;
+  for(const k of ["btc","etf"]) if(S.prices[k].px) S.prices[k].base=S.prices[k].px;
+  for(const c of COMPANIES){ const s=S.prices.basket[c]; if(s.px) s.base=s.px; }
+  save(); render();
+}
+function form(title,fields,onOk){
+  dlgBody.innerHTML='<h3>'+title+'</h3>'+fields.map(f=>
+    '<label>'+f.label+'</label><input id="f_'+f.id+'" type="'+(f.type||"text")+'" '+
+    (f.step?'step="'+f.step+'"':'')+' value="'+(f.value!==undefined?f.value:"")+'" '+
+    (f.type==="number"?'inputmode="decimal"':'')+'>').join("")+
+    '<div class="dlgbtns"><button class="btn ghost" onclick="dlg.close()">Abbrechen</button>'+
+    '<button class="btn" id="okBtn">Speichern</button></div>';
+  dlg.showModal();
+  okBtn.onclick=()=>{
+    const v={}; fields.forEach(f=>{const el=document.getElementById("f_"+f.id);
+      v[f.id]= f.type==="number"? Number(String(el.value).replace(",","."))||0 : el.value;});
+    if(onOk(v)!==false){ dlg.close(); save(); render(); }
+  };
+}
+function addSpend(){ form("Ausgabe eintragen",[{id:"label",label:"Wofür?"},{id:"eur",label:"Wie viel (€)",type:"number",step:"0.01"}],
+  v=>{ if(v.eur<=0) return false; K().spend.push({date:iso(today()),label:v.label,eur:v.eur}); }); }
+function addPayout(){ form("Auszahlung buchen",[{id:"eur",label:"Betrag (€)",type:"number",step:"0.01"},{id:"note",label:"Notiz"}],
+  v=>{ if(v.eur<=0) return false; K().payouts.push({date:iso(today()),eur:v.eur,note:v.note}); }); }
+function addBook(){
+  const kid=K();
+  if(kid.books.length>=BOOKS[KID].length){ alert("Alle Bücher sind schon abgehakt."); return; }
+  form("Buch abhaken",[{id:"title",label:"Titel"}],v=>{ kid.books.push({title:v.title||"Buch",date:iso(today())}); });
+}
+function addWords(){
+  const wk="w"+weekIndex(KID,today());
+  form("Unbekannte Wörter diese Woche",[{id:"n",label:"Anzahl",type:"number",value:K().words[wk]||0}],
+    v=>{ K().words[wk]=Math.max(0,Math.round(v.n)); });
+}
+function addDeposit(){
+  const c=calc(KID), lv=level(BUY);
+  if(!lv){ alert("Für "+INSTR[BUY].name+" gibt es noch keinen Kurs. Papa muss ihn erst holen."); return; }
+  form("In "+INSTR[BUY].name+" anlegen",[{id:"eur",label:"Wie viel? Du hast "+fmt(c.cash),type:"number",step:"0.5"}],v=>{
+    if(v.eur<=0) return false;
+    if(v.eur>c.cash+0.001){ alert("So viel Guthaben ist nicht da."); return false; }
+    K().deposits.push({id:Date.now(),date:iso(today()),instrument:BUY,eur:v.eur,px:lv});
+  });
+}
+function explainMatch(){
+  dlgBody.innerHTML='<h3>Der Spar-Bonus</h3>'+
+   '<p>Wenn du Geld anlegst und es <b>ein ganzes Jahr</b> liegen lässt, legt Papa <b>50 %</b> von dem, was du eingezahlt hast, oben drauf.</p>'+
+   '<p>Aus 20 € werden also 20 € plus 10 € Bonus — und dazu kommt, was der Kurs in der Zeit gemacht hat.</p>'+
+   '<p>Verkaufst du vorher, gibt es keinen Bonus. Der Kurs kann auch fallen. Der Bonus wird immer vom eingezahlten Betrag gerechnet.</p>'+
+   '<div class="dlgbtns"><button class="btn" onclick="dlg.close()">Verstanden</button></div>';
+  dlg.showModal();
+}
+function exportJSON(){
+  const b=new Blob([JSON.stringify(S,null,2)],{type:"application/json"}), a=document.createElement("a");
+  a.href=URL.createObjectURL(b); a.download="challenges-"+iso(today())+".json"; a.click();
+}
+function importJSON(){
+  const i=document.createElement("input"); i.type="file"; i.accept="application/json";
+  i.onchange=()=>{ const r=new FileReader(); r.onload=()=>{
+    try{ S=JSON.parse(r.result); save(); render(); alert("Sicherung eingelesen."); }
+    catch(e){ alert("Die Datei ließ sich nicht lesen."); } }; r.readAsText(i.files[0]); };
+  i.click();
+}
+render();
+</script>
+</body>
+</html>
