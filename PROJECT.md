@@ -91,6 +91,15 @@ that is not a site failure. Use `raw.githubusercontent.com`, which is allowliste
   enter: 10 marked words fills the week's €1 cap. This week and last week are tappable.
 - **Pocket money is unconditional** and strictly separate from challenge payouts. It is
   never tied to grades, chores, or behaviour, and is never clawed back.
+- **It is paid on the first day of a period, never pro-rated.** Monthly on the 1st, weekly
+  on Monday, counting from the first such day on or after the challenge start. The original
+  code counted calendar months *touched*, so a 31 Aug start paid August and September
+  within two days. Fixed Sept 2026; do not reintroduce month-difference arithmetic on the
+  raw start date.
+- **Day counts compare noon-anchored dates and round, never floor.** The family moves
+  between Bali (no DST) and Europe (DST), so a raw ms division can be off by an hour and
+  shift a week index or a vesting countdown by one. Applies to `weekIndex`,
+  `allowancePeriods` and `daysHeld`.
 - Cash balance is allowed to go negative rather than blocking a payout entry, so the
   parent can settle amounts that do not match the ledger exactly.
 - Earned and spent are shown as two separate totals with the balance derived, rather than
