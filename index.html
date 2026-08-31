@@ -63,7 +63,7 @@ button{font-family:inherit;font-size:17px;cursor:pointer;}
   padding:12px 18px;font-weight:600;min-height:48px;}
 .btn.ghost{background:transparent;color:var(--ink);border-color:var(--line);}
 .btn.small{padding:8px 14px;min-height:40px;font-size:15px;}
-.btn.tiny{padding:6px 12px;min-height:36px;font-size:14px;}
+.btn.tiny{padding:8px 14px;min-height:44px;font-size:14px;}
 .btn:disabled{opacity:.4;cursor:default;}
 .today{background:var(--card);border:1.5px solid var(--line);border-radius:var(--r);padding:18px;text-align:center;}
 .stamps{display:flex;gap:10px;}
@@ -307,6 +307,16 @@ const K=k=>S.kids[k||KID];
 function weekIndex(k,d){ return Math.round((monday(d)-monday(new Date(K(k).start+"T12:00:00")))/(7*DAY)); }
 function dshort(d){ const x=new Date(d+"T12:00:00"); return x.toLocaleDateString("en-GB",{day:"numeric",month:"short"}); }
 function esc(s){ return String(s==null?"":s).replace(/&/g,"&amp;").replace(/</g,"&lt;").replace(/>/g,"&gt;").replace(/"/g,"&quot;"); }
+/* A quoted JS string for use inside a double-quoted HTML attribute: the JS
+   string is delimited with single quotes and anything that could close the
+   attribute or the tag is html-escaped.  Never build one of these with
+   JSON.stringify — it emits double quotes, which end the attribute early and
+   leave the handler as an unparsable fragment. */
+function jsq(v){
+  return "'"+String(v==null?"":v)
+    .replace(/\\/g,"\\\\").replace(/'/g,"\\'")
+    .replace(/&/g,"&amp;").replace(/"/g,"&quot;").replace(/</g,"&lt;").replace(/>/g,"&gt;")+"'";
+}
 
 function fmt(eur){
   const neg=eur<-0.0001, a=Math.abs(eur);
@@ -747,7 +757,7 @@ function vSaving(c){
      '<div class="sub">'+(d.vested?"bonus earned":d.daysLeft+" days to go for the 50% bonus")+' · bought '+dshort(d.date)+'</div>'+
      '<div class="mini"><i style="width:'+(d.vested?100:Math.round((365-d.daysLeft)/365*100))+'%"></i></div></div>'+
      '<div style="text-align:right"><div class="money">'+fmt(d.value)+'</div><div class="sub">'+pct(p)+'</div>'+
-     '<button class="btn tiny ghost" style="margin-top:6px" onclick="sellDeposit('+JSON.stringify(String(d.id))+')">Sell</button></div></div>';
+     '<button class="btn tiny ghost" style="margin-top:6px" onclick="sellDeposit('+jsq(d.id)+')">Sell</button></div></div>';
   }).join("") || '<p class="sub" style="margin:0">Nothing invested yet.</p>';
   const soldList=inv.sold.length? '<section><h2>Already sold</h2><div class="card">'+inv.sold.slice().reverse().map(d=>{
     const p=(d.soldValue/d.eur-1)*100;
@@ -1143,7 +1153,7 @@ function sellDeposit(id){
       : '<div class="warnbox">There are still <b>'+daysLeft+' days</b> to go. If you sell now you '+
         '<b>give up the '+fmt(d.eur*0.5)+' bonus</b> for this money, and it does not come back if you buy again later.</div>')+
     '<div class="dlgbtns"><button class="btn ghost" onclick="dlg.close()">Keep it</button>'+
-    '<button class="btn" onclick="doSell('+JSON.stringify(String(id))+')">Sell for '+fmt(val)+'</button></div>';
+    '<button class="btn" onclick="doSell('+jsq(id)+')">Sell for '+fmt(val)+'</button></div>';
   if(!dlg.open) dlg.showModal();
 }
 function doSell(id){
