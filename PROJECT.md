@@ -72,6 +72,13 @@ that is not a site failure. Use `raw.githubusercontent.com`, which is allowliste
 - **No build step, no dependencies, no service worker.** `index.html` is self-contained
   apart from static icon files, which the browser fetches but the app never reads.
   A service worker in an earlier project (blitzword) caused a cache bug that cost hours.
+- **Inline handlers are built with `jsq()`, never `JSON.stringify`.** The views are HTML
+  strings with double-quoted attributes, so a value quoted with `JSON.stringify` emits
+  double quotes that close the attribute early and leave the handler as an unparsable
+  fragment. The button renders and does nothing. That shipped in the Sell button and
+  survived a test suite that checked the button's text and called the function directly —
+  neither of which touches the rendered attribute. `t9` now compiles every `on*=` attribute
+  in every view and dialog and simulates a real tap on Sell.
 - **Every asset path is relative.** The site is served from `/Taschengeld/`, not a domain
   root, so a leading slash points at `ikarus-eth.github.io/` and 404s. This is why iOS
   could not auto-discover `/apple-touch-icon.png` and why the link tag is required.
