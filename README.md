@@ -47,10 +47,19 @@ Maximum: **€35.50**. No physical challenge in this cycle.
 The weekly rate ladder advances on **qualifying weeks, not calendar weeks**. A missed week
 costs nothing already earned; it only delays reaching the higher rate.
 
+## Logging
+
+The big stamp on the Heute screen logs today. The two week rows underneath (last week and
+this week) are tappable for any day inside a rolling **7-day window**, so a forgotten or
+mistaken day can be corrected. Tapping cycles: empty → base minutes → bonus minutes (only
+where a bonus tier exists) → empty. Days older than 7 days and future days render dimmed
+and do not respond.
+
 ## Savings
 
 Deposits go into Bitcoin, a world ETF, or an equal-weighted basket of nine companies
-(Alphabet, Microsoft, SpaceX, NVIDIA, Apple, Amazon, TSMC, Meta, Tesla).
+(Alphabet, Microsoft, SpaceX, NVIDIA, Apple, Amazon, TSMC, Meta, Tesla). The basket is an
+index, base 100, averaged across the nine components' own base-100 indices.
 
 Any deposit held **365 days** earns a **50% match on the deposited amount**, not on market
 value — so a drawdown of up to 33% still leaves the child above principal. Selling before
@@ -84,8 +93,8 @@ Fallbacks when the sheet is unreachable or a row is missing:
 | `api.coinbase.com/v2/prices/BTC-EUR/spot` | Bitcoin | none |
 | `api.frankfurter.app` | EUR→IDR (ECB daily) | none |
 
-SpaceX is private and has no feed. Set it by hand, either as a row in the sheet or in the
-parent view, indexed to 100 at the start.
+SpaceX has traded on Nasdaq as `SPCX` since its IPO on 12 June 2026, so it is a normal
+row like the rest. No manual field.
 
 ## Parent view
 
