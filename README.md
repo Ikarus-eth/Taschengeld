@@ -4,12 +4,27 @@ Single-file web app for tracking Juna's and Artus's reading challenges, pocket m
 spending, and a virtual savings portfolio. Deployed as a static page on GitHub Pages,
 used on an iPad from the home screen. The interface is in English.
 
-**No build step. No dependencies. No service worker.** `index.html` is the entire app.
+**No build step. No dependencies. No service worker.** `index.html` is the entire app;
+the only other files served are the icon PNGs and the manifest.
 
 ## Deploy
 
 Push `index.html` to `main`. Pages serves it from the repo root.
 To force iOS to pick up a new version, open the URL once in Safari with `?v=N` appended.
+
+## Home screen icon
+
+`apple-touch-icon.png` is a 180x180 opaque PNG, full bleed, no rounded corners — iOS masks
+it into a squircle itself and fills any transparency with black. All icon hrefs are
+relative because the site is served from `/Taschengeld/`, so iOS cannot find an icon at the
+domain root on its own.
+
+Regenerate with `python3 tools/make-icons.py [spines-ink|book-ink|book-juna|spines-paper]`,
+which writes `apple-touch-icon.png`, `icon-512.png` and `favicon-32.png`. Needs Pillow, runs
+by hand, is not part of any deploy.
+
+Changing the icon does not update a shortcut that is already on the home screen: iOS caches
+the icon when the shortcut is created. Delete it and add it again.
 
 ## Data
 
