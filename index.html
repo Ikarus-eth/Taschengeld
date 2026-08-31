@@ -128,6 +128,10 @@ td{padding:7px 0;border-top:1px solid var(--line);}
 td:last-child{text-align:right;font-variant-numeric:tabular-nums;font-weight:600;}
 tr:first-child td{border-top:0;}
 .feedlog{font-size:13px;color:var(--ink-soft);margin-top:10px;white-space:pre-line;}
+.logrow{display:flex;gap:10px;align-items:flex-start;padding:9px 0;border-top:1px solid var(--line);font-size:15px;}
+.logrow .logt{flex:none;width:44px;color:var(--ink-soft);font-size:13px;padding-top:2px;}
+.logrow .who{flex:none;font-size:12px;text-transform:lowercase;padding-top:3px;}
+.flag{color:var(--warn);}
 @media (prefers-reduced-motion:no-preference){
   .stamp,.check,.wd i,.st i{transition:background-color .18s ease,border-color .18s ease;}
 }
@@ -184,6 +188,7 @@ function slot(sym){ return {px:null, base:null, sym:sym||null}; }
 function fresh(){
   return {
     v:3, fx:17500, fxDate:null, pin:"1234",
+    log:[], logStart:null, seq:0, review:{},
     feed:{sheet:"", updated:null, tried:null, log:"", auto:true},
     prices:{ btc:slot("BTC"), etf:slot("URTH"),
       basket:Object.fromEntries(COMPANIES.map(c=>[c, slot(TICKER[c])])) },
@@ -221,7 +226,7 @@ let S=load(), KID="juna", VIEW="today", CUR="EUR", BUY="basket";
 function load(){
   try{
     const raw=localStorage.getItem(KEY)||localStorage.getItem("challenges_v1");
-    if(!raw){ const o=fresh(); o.feed.sheet=localStorage.getItem(FEEDKEY)||""; return o; }
+    if(!raw){ const o=fresh(); o.feed.sheet=localStorage.getItem(FEEDKEY)||""; o.logStart=new Date().toISOString(); return o; }
     const p=JSON.parse(raw), f=fresh(), out=Object.assign({},f,p);
     out.feed=Object.assign({},f.feed,p.feed||{});
     /* the sheet link also lives in its own key, so a partial import or a bad
@@ -251,6 +256,11 @@ function load(){
       kid.milestones=(kid.milestones||[]).map(m=>DE2EN[m.label]? Object.assign({},m,{label:DE2EN[m.label]}) : m);
       out.kids[k]=kid;
     }
+    out.log=Array.isArray(p.log)? p.log : [];
+    out.logStart=p.logStart||new Date().toISOString();
+    out.review=(p.review&&typeof p.review==="object")? p.review : {};
+    out.seq=Number(p.seq)||0;
+    for(const e of out.log){ if(!e.n) e.n=++out.seq; else if(e.n>out.seq) out.seq=e.n; }
     out.v=3;
     return out;
   }catch(e){ return fresh(); }
@@ -262,6 +272,23 @@ function save(){
   }catch(e){ alert("Could not save."); }
 }
 
+/* ---- audit log ----
+   Append-only. Every entry carries both the moment the tap happened (t) and the
+   day it refers to (d), because the gap between them is the whole point: the app
+   lets a reading day be filled in up to 7 days late, so "logged on Saturday for
+   Tuesday" is exactly what a weekly review needs to see. Entries also carry the
+   earned and cash totals as they stood right after the change, so the parent can
+   read a balance history straight off the log. Nothing here deletes. */
+const LOGCAP=1200;
+function logEvent(k,a,info){
+  try{
+    const c=calc(k);
+    S.log.push(Object.assign({n:++S.seq, t:new Date().toISOString(), k:k, a:a,
+      by:(VIEW==="parents"?"p":"k"), earned:Math.round(c.earned*100)/100,
+      cash:Math.round(c.cash*100)/100}, info||{}));
+    if(S.log.length>LOGCAP) S.log.splice(0,S.log.length-LOGCAP);
+  }catch(e){ /* logging must never block the action it is recording */ }
+}
 const iso=d=>{const x=new Date(d);return x.getFullYear()+"-"+String(x.getMonth()+1).padStart(2,"0")+"-"+String(x.getDate()).padStart(2,"0");};
 function monday(d){const x=new Date(d);x.setHours(12,0,0,0);const g=(x.getDay()+6)%7;x.setDate(x.getDate()-g);return x;}
 function today(){const x=new Date();x.setHours(12,0,0,0);return x;}
@@ -278,6 +305,8 @@ function fmt(eur){
   return (neg?"−":"")+"€"+(Math.round(a*100)/100).toFixed(2).replace(/\.00$/,"");
 }
 function idr(n){ return "Rp "+Math.round(n).toLocaleString("en-US"); }
+function eur(n){ const neg=n<-0.0001,a=Math.abs(n);
+  return (neg?"−":"")+"€"+(Math.round(a*100)/100).toFixed(2).replace(/\.00$/,""); }
 function pct(n){ return (n>=0?"+":"−")+Math.abs(n).toFixed(1)+"%"; }
 
 /* ---- prices ---- */
@@ -558,6 +587,7 @@ function cycleDay(key){
   else if(kid.bonusMinutes && cur<kid.bonusMinutes) next=kid.bonusMinutes;
   else next=0;
   if(next) kid.days[key]=next; else delete kid.days[key];
+  logEvent(KID,"day",{d:key,v:next,p:cur});
   save(); render();
 }
 function weekRow(m0,label){
@@ -733,6 +763,156 @@ function vSaving(c){
    'Sell before the year is up and that bonus is gone. Prices can fall as well as rise.</div></section>'+
    '<section><h2>Your investments</h2><div class="card">'+hold+'</div></section>'+soldList;
 }
+
+/* ---- review ---- */
+let LOGDAYS=-1;   /* -1 = since the last review, 0 = everything, else n days */
+function logDayOf(e){ return iso(new Date(e.t)); }   /* local day, not the UTC slice */
+function reviewMark(k){ return (S.review&&S.review[k])||{n:0,t:null}; }
+function logBound(k){
+  if(LOGDAYS===0) return {n:0};
+  if(LOGDAYS===-1) return {n:reviewMark(k).n||0};
+  return {t:Date.now()-LOGDAYS*DAY};
+}
+function inBound(e,b){ return b.n!==undefined? (e.n||0)>b.n : new Date(e.t).getTime()>=b.t; }
+function logEntries(k,b){
+  return (S.log||[]).filter(e=>e.k===k && inBound(e,b))
+    .sort((a,b2)=> a.t<b2.t?1:a.t>b2.t?-1:(b2.n||0)-(a.n||0));
+}
+/* Several reading days entered in one sitting is the pattern worth seeing: it is
+   the difference between reading every evening and reconstructing a week on
+   Sunday. Not proof of anything, just the thing to ask about. */
+function batchSet(list){
+  const by={};
+  for(const e of list) if(e.a==="day"&&e.v>0) (by[logDayOf(e)]=by[logDayOf(e)]||[]).push(e);
+  const out=new Map();
+  for(const day in by){
+    const grp=by[day], dates=new Set(grp.map(e=>e.d));
+    if(grp.length>=3 && dates.size>=3) grp.forEach(e=>out.set(e,grp.length));
+  }
+  return out;
+}
+function lateBy(e){
+  if(e.a!=="day"||!e.d) return 0;
+  return Math.round((new Date(logDayOf(e)+"T12:00:00")-new Date(e.d+"T12:00:00"))/DAY);
+}
+function logFlags(e,batch){
+  const f=[];
+  const late=lateBy(e);
+  if(late>=2) f.push("filled in "+late+" days later");
+  if(e.a==="day"&&e.v===0) f.push("day cleared");
+  if(e.a==="words"&&e.by==="k"&&e.v>0) f.push("ticked by "+K(e.k).name);
+  if(e.a==="extra") f.push("money added by hand");
+  if(e.a==="setting") f.push("setting changed");
+  if(e.a==="import") f.push("backup restored");
+  if(batch&&batch.has(e)) f.push(batch.get(e)+" days entered on this one day");
+  return f;
+}
+const ACT={day:"Reading",words:"Words",spend:"Spent",extra:"Extra money",payout:"Payout",
+  book:"Book",goal:"Sport goal",buy:"Invested",sell:"Sold",setting:"Setting",import:"Backup"};
+function logLine(e){
+  const kid=K(e.k);
+  switch(e.a){
+    case "day": return e.v>0? "Logged "+e.v+" min for "+dshort(e.d) : "Cleared "+dshort(e.d);
+    case "words": return (e.v>0? "Marked "+e.v+" words" : "Cleared the words")+
+      " for the week of "+dshort(e.d)+(e.eur?" ("+eur(e.eur)+")":"");
+    case "spend": return "Spent "+eur(-e.eur)+" on "+esc(e.label)+
+      (e.idr?" — paid "+idr(e.idr)+" at €1 = "+idr(e.fx):"");
+    case "extra": return "Added "+eur(e.eur)+" — "+esc(e.label)+
+      (e.idr?" ("+idr(e.idr)+")":"");
+    case "payout": return "Paid out "+eur(-e.eur)+(e.label?" — "+esc(e.label):"");
+    case "book": return "Ticked off book "+e.v+": "+esc(e.label);
+    case "goal": return (e.v?"Reached: ":"Undid: ")+esc(e.label)+" ("+eur(Math.abs(e.eur))+")";
+    case "buy": return "Invested "+eur(-e.eur)+" in the "+esc(e.label);
+    case "sell": return "Sold "+esc(e.label)+" for "+eur(e.eur)+" (put in "+eur(e.p)+")"+
+      (e.v?" — bonus kept":" — bonus given up");
+    case "setting": return esc(e.label)+": "+esc(e.p)+" → "+esc(e.v);
+    case "import": return "A backup was restored onto this iPad";
+    default: return e.a;
+  }
+}
+function hhmm(t){ return new Date(t).toLocaleTimeString("en-GB",{hour:"2-digit",minute:"2-digit"}); }
+function dfull(t){ return new Date(t).toLocaleDateString("en-GB",{weekday:"short",day:"numeric",month:"short"}); }
+
+function reviewSummary(list,k,b){
+  const days=list.filter(e=>e.a==="day"&&e.v>0), cleared=list.filter(e=>e.a==="day"&&e.v===0);
+  const late=days.filter(e=>lateBy(e)>=2).length;
+  const words=list.filter(e=>e.a==="words"&&e.v>0).length;
+  const extra=list.filter(e=>e.a==="extra").reduce((a,e)=>a+e.eur,0);
+  const spent=list.filter(e=>e.a==="spend").reduce((a,e)=>a-e.eur,0);
+  const paid=list.filter(e=>e.a==="payout").reduce((a,e)=>a-e.eur,0);
+  const trades=list.filter(e=>e.a==="buy"||e.a==="sell").length;
+  const sets=list.filter(e=>e.a==="setting"||e.a==="import").length;
+  const now=calc(k).earned;
+  const before=(S.log||[]).filter(e=>e.k===k&&!inBound(e,b)).slice(-1)[0];
+  const base=before? before.earned : null;
+  const batch=batchSet(list);
+  const needs=list.filter(e=>logFlags(e,batch).length).length;
+  const rows=[
+    ["Needs a look", needs? String(needs)+(needs===1?" entry":" entries") : "nothing"],
+    ["Reading days logged", days.length+(late?" · "+late+" filled in late":"")],
+    ["Days cleared again", cleared.length? String(cleared.length) : "0"],
+    ["Word weeks marked", String(words)],
+    ["Extra money added", extra? eur(extra) : "—"],
+    ["Spending entered", spent? eur(spent) : "—"],
+    ["Payouts booked", paid? eur(paid) : "—"],
+    ["Buys and sells", String(trades)],
+    ["Settings touched", String(sets)],
+    ["Earned", (base!==null? eur(base)+" → ":"")+eur(now)+
+      (base!==null&&now-base? "  ("+(now-base>=0?"+":"−")+eur(Math.abs(now-base)).replace("−","")+")":"")]
+  ];
+  return '<table>'+rows.map(r=>'<tr><td>'+r[0]+'</td><td>'+r[1]+'</td></tr>').join("")+'</table>';
+}
+function vReview(){
+  const b=logBound(KID), list=logEntries(KID,b), batch=batchSet(list);
+  const ranges=[[-1,"since last check"],[7,"7 days"],[30,"30 days"],[0,"everything"]];
+  const tabs=ranges.map(r=>'<button class="btn tiny '+(LOGDAYS===r[0]?"":"ghost")+'" '+
+    'onclick="LOGDAYS='+r[0]+';render()">'+r[1]+'</button>').join("");
+  let body="", lastDay="";
+  for(const e of list.slice(0,120)){
+    const day=logDayOf(e);
+    if(day!==lastDay){ lastDay=day; body+='<div class="weeklabel" style="margin-top:16px">'+dfull(e.t)+'</div>'; }
+    const f=logFlags(e,batch);
+    body+='<div class="logrow"><div class="logt num">'+hhmm(e.t)+'</div>'+
+      '<div class="grow"><div>'+logLine(e)+'</div>'+
+      (f.length?'<div class="sub flag">⚑ '+f.join(" · ")+'</div>':'')+
+      '</div><div class="sub who">'+(e.by==="p"?"you":esc(K(e.k).name))+'</div></div>';
+  }
+  if(!list.length) body='<p class="sub" style="margin:0">Nothing recorded in this window.</p>';
+  const more=list.length>120? '<p class="sub">Showing the newest 120 of '+list.length+' entries.</p>':'';
+  const started=S.logStart? "Recording started "+dfull(S.logStart)+"." : "";
+  return '<section><h2>Review — '+esc(K().name)+'</h2><div class="card">'+
+    '<div style="display:flex;gap:6px;flex-wrap:wrap;margin-bottom:12px">'+tabs+'</div>'+
+    reviewSummary(list,KID,b)+
+    '<div style="margin-top:14px;display:flex;gap:8px;flex-wrap:wrap">'+
+    '<button class="btn small" onclick="markReviewed()">Mark as checked</button>'+
+    '<button class="btn small ghost" onclick="exportLog()">Export the log</button></div>'+
+    '<p class="sub" style="margin:10px 0 0">'+
+    (reviewMark(KID).t? "Last checked "+dfull(reviewMark(KID).t)+" at "+hhmm(reviewMark(KID).t)+". " : "Never checked yet. ")+
+    started+'</p>'+
+    body+more+
+    '<div class="notebox">Everything is written down as it happens and nothing in the app can '+
+    'delete it — restoring a backup merges the two logs rather than replacing them. It is a '+
+    'record, not a lock: anyone with the iPad and some patience could still edit the stored '+
+    'data directly.</div></div></section>';
+}
+function markReviewed(){
+  /* per child: checking Juna's week must not clear what is new for Artus */
+  if(!S.review) S.review={};
+  S.review[KID]={n:S.seq||0, t:new Date().toISOString()};
+  save(); render();
+}
+function exportLog(){
+  const rows=[["when","who","what","refers to","detail","euro","earned after","cash after"]];
+  for(const e of (S.log||[]).filter(x=>x.k===KID).sort((a,b)=> a.t<b.t?-1:1)){
+    rows.push([logDayOf(e)+" "+hhmm(e.t), e.by==="p"?"parent":K(e.k).name, ACT[e.a]||e.a, e.d||"",
+      logLine(e).replace(/<[^>]+>/g,"").replace(/"/g,"'"),
+      e.eur!==undefined&&e.eur!==null? String(Math.round(e.eur*100)/100):"",
+      String(e.earned), String(e.cash)]);
+  }
+  const csv=rows.map(r=>r.map(c=>'"'+String(c).replace(/"/g,'""')+'"').join(",")).join("\n");
+  const b=new Blob([csv],{type:"text/csv"}), a=document.createElement("a");
+  a.href=URL.createObjectURL(b); a.download="review-"+KID+"-"+iso(today())+".csv"; a.click();
+}
 function askPin(){
   dlgBody.innerHTML='<h3>Parents</h3><label>PIN</label><input id="pinIn" type="password" inputmode="numeric" autocomplete="off">'+
    '<div class="dlgbtns"><button class="btn ghost" onclick="dlg.close()">Cancel</button>'+
@@ -757,7 +937,7 @@ function vParents(c){
    '<button class="btn small ghost" onclick="addBook()">Tick off a book</button>'+
    '<button class="btn small ghost" onclick="addExtra()">Add extra money</button>'+
    (kid.wordRate?'<button class="btn small ghost" onclick="addWords()">Enter word count</button>':'')+
-   '</div></div></section>'+ms+
+   '</div></div></section>'+vReview()+ms+
    '<section><h2>Prices</h2><div class="card">'+
    '<div style="display:flex;gap:8px;flex-wrap:wrap"><button class="btn small" onclick="runFeed(this)">Fetch prices now</button>'+
    '<button class="btn small ghost" onclick="resetBase()">Set start values to today</button></div>'+
@@ -776,11 +956,11 @@ function vParents(c){
    '<option value="on"'+(S.feed.auto!==false?" selected":"")+'>on</option>'+
    '<option value="off"'+(S.feed.auto===false?" selected":"")+'>off</option></select>'+
    '<label>€1 in rupiah ('+fxAge+')</label>'+
-   '<input type="number" step="1" value="'+S.fx+'" onchange="setFx(Number(this.value)||S.fx);save();render()">'+
+   '<input type="number" step="1" value="'+S.fx+'" onchange="setFxManual(this.value)">'+
    '<label>Bitcoin in € (if the feed is stuck)</label>'+
-   '<input type="number" step="1" value="'+(S.prices.btc.px||"")+'" onchange="S.prices.btc.px=Number(this.value)||null;if(!S.prices.btc.base)S.prices.btc.base=S.prices.btc.px;save();render()">'+
+   '<input type="number" step="1" value="'+(S.prices.btc.px||"")+'" onchange="setManualPx(\'btc\',this.value)">'+
    '<label>World fund in € (if the feed is stuck)</label>'+
-   '<input type="number" step="0.01" value="'+(S.prices.etf.px||"")+'" onchange="S.prices.etf.px=Number(this.value)||null;if(!S.prices.etf.base)S.prices.etf.base=S.prices.etf.px;save();render()">'+
+   '<input type="number" step="0.01" value="'+(S.prices.etf.px||"")+'" onchange="setManualPx(\'etf\',this.value)">'+
    '<div class="warnbox">No API key needed. The sheet has to be set to “Anyone with the link — Viewer”. '+
    'Shares are valued at the price on the day of purchase, so changing start values later only shifts the '+
    'percentage display, never the portfolio value.</div></div></section>'+
@@ -794,7 +974,7 @@ function vParents(c){
      '<input type="number" value="'+kid.bonusMinutes+'" onchange="kid_(Number(this.value)||0,\'bonusMinutes\')">'+
      '<input type="number" value="'+kid.bonusDays+'" onchange="kid_(Number(this.value)||0,\'bonusDays\')">'+
      '<input type="number" step="0.5" value="'+kid.bonusEur+'" onchange="kid_(Number(this.value)||0,\'bonusEur\')"></div>':'')+
-   '<label>PIN</label><input type="text" value="'+esc(S.pin)+'" onchange="S.pin=this.value||\'1234\';save()">'+
+   '<label>PIN</label><input type="text" value="'+esc(S.pin)+'" onchange="setPin(this.value)">'+
    '</div></section>'+
    '<section><h2>Backup</h2><div class="card"><div style="display:flex;gap:8px;flex-wrap:wrap">'+
    '<button class="btn small ghost" onclick="exportJSON()">Save data</button>'+
@@ -803,18 +983,35 @@ function vParents(c){
 }
 
 /* ---- actions ---- */
-function kid_(v,f){ K()[f]=v; save(); render(); }
+function kid_(v,f){ const was=K()[f]; K()[f]=v;
+  if(was!==v) logEvent(KID,"setting",{d:iso(today()),label:f,v:String(v),p:String(was)});
+  save(); render(); }
+function setPin(v){ const was=S.pin; S.pin=v||"1234";
+  if(was!==S.pin) logEvent(KID,"setting",{d:iso(today()),label:"PIN",v:"changed",p:""}); save(); }
+function setFxManual(v){ const was=S.fx; setFx(Number(v)||S.fx);
+  if(was!==S.fx) logEvent(KID,"setting",{d:iso(today()),label:"€1 in rupiah",v:String(S.fx),p:String(was)});
+  save(); render(); }
+function setManualPx(inst,v){ const sl=S.prices[inst], was=sl.px;
+  sl.px=Number(v)||null; if(!sl.base) sl.base=sl.px;
+  if(was!==sl.px) logEvent(KID,"setting",{d:iso(today()),label:INSTR[inst].name+" price",
+    v:String(sl.px),p:String(was)});
+  save(); render(); }
 function logDay(min){
-  const k=iso(today()), kid=K();
-  if((kid.days[k]||0)===min) delete kid.days[k]; else kid.days[k]=min;
+  const k=iso(today()), kid=K(), cur=kid.days[k]||0;
+  if(cur===min) delete kid.days[k]; else kid.days[k]=min;
+  logEvent(KID,"day",{d:k,v:kid.days[k]||0,p:cur});
   save(); render();
 }
-function toggleMs(id){ const m=K().milestones.find(x=>x.id===id); m.done=m.done?null:iso(today()); save(); render(); }
+function toggleMs(id){ const m=K().milestones.find(x=>x.id===id); m.done=m.done?null:iso(today());
+  logEvent(KID,"goal",{d:iso(today()),label:m.label,v:m.done?1:0,eur:m.done?m.eur:-m.eur}); save(); render(); }
 function toggleWordWeek(i){
   const kid=K();
   if(!kid.wordRate || !wordEditable(KID,i)) return;
   const key="w"+i, full=wordFull(kid);
-  if((kid.words[key]||0)>=full) delete kid.words[key]; else kid.words[key]=full;
+  const was=kid.words[key]||0;
+  if(was>=full) delete kid.words[key]; else kid.words[key]=full;
+  logEvent(KID,"words",{d:iso(addD(monday(new Date(kid.start+"T12:00:00")),i*7)),
+    v:kid.words[key]||0,p:was,eur:((kid.words[key]||0)-was)*kid.wordRate});
   save(); render();
 }
 async function runFeed(btn){ btn.disabled=true; btn.textContent="fetching…"; await fetchPrices(false); }
@@ -874,7 +1071,9 @@ function addSpend(){
   ],v=>{
     const m=moneyFrom(v);
     if(!m){ alert("Please enter an amount."); return false; }
-    K().spend.push(Object.assign({date:iso(today()),label:v.label||"Purchase"},m));
+    const rec=Object.assign({date:iso(today()),label:v.label||"Purchase"},m);
+    K().spend.push(rec);
+    logEvent(KID,"spend",{d:rec.date,eur:-rec.eur,label:rec.label,idr:rec.idr||null,fx:rec.fx||null});
   },"Rupiah is converted at today\u2019s rate, €1 = "+idr(S.fx)+", and keeps that rate.");
 }
 function addExtra(){
@@ -887,20 +1086,28 @@ function addExtra(){
     if(!m){ alert("Please enter an amount."); return false; }
     const kid=K();
     if(!Array.isArray(kid.extras)) kid.extras=[];
-    kid.extras.push(Object.assign({date:iso(today()),label:v.label||"Extra money"},m));
+    const rec=Object.assign({date:iso(today()),label:v.label||"Extra money"},m);
+    kid.extras.push(rec);
+    logEvent(KID,"extra",{d:rec.date,eur:rec.eur,label:rec.label,idr:rec.idr||null,fx:rec.fx||null});
   },"Birthday money, a gift from Oma, anything that is neither pocket money nor from the challenge.");
 }
 function addPayout(){ form("Book a payout",[{id:"eur",label:"Amount (€)",type:"number",step:"0.01"},{id:"note",label:"Note"}],
-  v=>{ if(v.eur<=0) return false; K().payouts.push({date:iso(today()),eur:v.eur,note:v.note}); }); }
+  v=>{ if(v.eur<=0) return false; K().payouts.push({date:iso(today()),eur:v.eur,note:v.note});
+    logEvent(KID,"payout",{d:iso(today()),eur:-v.eur,label:v.note||""}); }); }
 function addBook(){
   const kid=K();
   if(kid.books.length>=BOOKS[KID].length){ alert("All books are already ticked off."); return; }
-  form("Tick off a book",[{id:"title",label:"Title"}],v=>{ kid.books.push({title:v.title||"Book",date:iso(today())}); });
+  form("Tick off a book",[{id:"title",label:"Title"}],v=>{
+    kid.books.push({title:v.title||"Book",date:iso(today())});
+    logEvent(KID,"book",{d:iso(today()),label:v.title||"Book",v:kid.books.length}); });
 }
 function addWords(){
   const wk="w"+weekIndex(KID,today());
-  form("New words this week",[{id:"n",label:"How many",type:"number",value:K().words[wk]||0}],
-    v=>{ K().words[wk]=Math.max(0,Math.round(v.n)); });
+  const was=K().words[wk]||0;
+  form("New words this week",[{id:"n",label:"How many",type:"number",value:was}],
+    v=>{ const kid=K(); kid.words[wk]=Math.max(0,Math.round(v.n));
+      logEvent(KID,"words",{d:iso(monday(today())),v:kid.words[wk],p:was,
+        eur:(Math.min(kid.words[wk]*kid.wordRate,kid.wordCap)-Math.min(was*kid.wordRate,kid.wordCap))}); });
 }
 function addDeposit(){
   const c=calc(KID), lv=level(BUY);
@@ -909,6 +1116,7 @@ function addDeposit(){
     if(v.eur<=0) return false;
     if(v.eur>c.cash+0.001){ alert("You do not have that much."); return false; }
     K().deposits.push({id:"d"+Date.now(),date:iso(today()),instrument:BUY,eur:v.eur,px:lv});
+    logEvent(KID,"buy",{d:iso(today()),label:INSTR[BUY].name,eur:-v.eur});
   },"A one-year clock starts today for this money. "+INSTR[BUY].care);
 }
 function sellDeposit(id){
@@ -939,6 +1147,8 @@ function doSell(id){
   d.soldDate=iso(today());
   d.soldPx=now;
   d.matchClaimed=vested;
+  logEvent(KID,"sell",{d:d.soldDate,label:INSTR[d.instrument].name,eur:d.soldValue,
+    v:vested?1:0,p:Math.round(d.eur*100)/100});
   dlg.close(); save(); render();
 }
 const SHEET_TEMPLATE=[
@@ -1020,11 +1230,24 @@ function importJSON(){
   const i=document.createElement("input"); i.type="file"; i.accept="application/json";
   i.onchange=()=>{ const r=new FileReader(); r.onload=()=>{
     try{
-      const keep=S.feed.sheet;
+      const keep=S.feed.sheet, keepLog=S.log||[], keepStart=S.logStart, keepRev=S.review||{};
       S=JSON.parse(r.result);
       if(!S.feed) S.feed={sheet:"",updated:null,tried:null,log:"",auto:true};
       if(!S.feed.sheet && keep) S.feed.sheet=keep;
       for(const k of ["juna","artus"]) if(S.kids&&S.kids[k]&&!Array.isArray(S.kids[k].extras)) S.kids[k].extras=[];
+      /* union of both logs, deduped: restoring a backup must not erase what this
+         device already recorded, or a restore becomes a way to clear the trail */
+      const seen=new Set(), merged=[];
+      for(const e of keepLog.concat(Array.isArray(S.log)?S.log:[])){
+        const key=JSON.stringify(e);
+        if(!seen.has(key)){ seen.add(key); merged.push(e); }
+      }
+      merged.sort((a,b)=> a.t<b.t?-1:a.t>b.t?1:0);
+      S.log=merged.slice(-LOGCAP);
+      S.review=Object.assign({},S.review||{},keepRev);
+      S.seq=0; for(const e of S.log){ if(!e.n) e.n=++S.seq; else if(e.n>S.seq) S.seq=e.n; }
+      S.logStart=keepStart&&(!S.logStart||keepStart<S.logStart)? keepStart : (S.logStart||new Date().toISOString());
+      logEvent(KID,"import",{d:iso(today()),label:"backup restored"});
       save(); render(); alert("Backup loaded.");
     }
     catch(e){ alert("That file could not be read."); } }; r.readAsText(i.files[0]); };
