@@ -110,6 +110,10 @@ that is not a site failure. Use `raw.githubusercontent.com`, which is allowliste
   (`idr`, `fx`, `eur` all stored). Balances themselves stay in euro.
 - **Extra money** (gifts, birthday money) is a third category, separate from pocket money
   and challenge payouts. It lands in the balance but never counts as *earned*.
+- **Investment copy is explained through objects she has touched**, never through finance
+  vocabulary. Each of the nine basket companies has a "where you have seen it" line, and
+  the concept ladder is company → share → basket → the 50% match. If a new instrument is
+  added it needs the same treatment or it will not be understood.
 - **The word bonus is a weekly checkbox for the child**, not a number only a parent can
   enter: 10 marked words fills the week's €1 cap. This week and last week are tappable.
 - **Pocket money is unconditional** and strictly separate from challenge payouts. It is
