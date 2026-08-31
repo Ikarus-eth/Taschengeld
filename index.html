@@ -111,6 +111,14 @@ button{font-family:inherit;font-size:17px;cursor:pointer;}
 .chipco{font-size:13px;padding:4px 9px;border-radius:999px;background:var(--paper);
   border:1px solid var(--line);color:var(--ink-soft);}
 .chipco b{color:var(--ink);font-weight:600;}
+.corow{display:flex;align-items:center;gap:12px;width:100%;min-height:58px;padding:10px 0;
+  border:0;border-top:1px solid var(--line);background:none;text-align:left;
+  font-family:inherit;font-size:16px;color:var(--ink);}
+.corow:first-child{border-top:0;}
+.corow .coico{flex:none;width:32px;font-size:23px;text-align:center;}
+.corow .grow{flex:1;min-width:0;display:block;}
+.corow .coname{display:block;font-weight:600;line-height:1.2;}
+.corow .sub{display:block;}
 nav{position:fixed;left:0;right:0;bottom:0;background:rgba(255,255,255,.96);
   border-top:1.5px solid var(--line);display:flex;padding-bottom:env(safe-area-inset-bottom);backdrop-filter:blur(8px);}
 nav button{flex:1;background:none;border:0;padding:11px 4px 13px;font-size:12px;font-weight:600;
@@ -178,6 +186,40 @@ const BOOKS={juna:[4,7,10,14], artus:[2,2,2,2,2]};
 const COMPANIES=["Alphabet","Microsoft","SpaceX","NVIDIA","Apple","Amazon","TSMC","Meta","Tesla"];
 const TICKER={Alphabet:"GOOGL",Microsoft:"MSFT",SpaceX:"SPCX",NVIDIA:"NVDA",Apple:"AAPL",
   Amazon:"AMZN",TSMC:"TSM",Meta:"META",Tesla:"TSLA"};
+
+/* Every company in the basket described through something she has already held,
+   watched or used.  "Where you have seen it" is the line that does the work:
+   a ten-year-old cannot picture a semiconductor foundry, but she can picture
+   the back of her own iPad. */
+const CO={
+ Apple:{icon:"📱", short:"The iPad in your hands.",
+   what:"Apple makes iPads, iPhones and Mac computers. They draw the plans for the chips inside them, and a company called TSMC actually builds those chips.",
+   where:"The apple on the back of this iPad."},
+ Alphabet:{icon:"🔍", short:"Google, YouTube and Maps.",
+   what:"Alphabet is the company behind Google. Searching for something, watching YouTube, following Maps to a beach — all of that is them.",
+   where:"Every time somebody says “just google it”."},
+ Microsoft:{icon:"🎮", short:"Minecraft, Xbox and Windows.",
+   what:"Microsoft makes Windows, the software on most computers that are not Macs. They also own Minecraft and the Xbox.",
+   where:"Minecraft. Every block of it belongs to Microsoft."},
+ NVIDIA:{icon:"🎨", short:"The chip that draws games.",
+   what:"NVIDIA makes the chip that draws everything you see in a game, fast enough that it never stutters. It turned out the same chips are also what makes AI work, which is why so many people want them.",
+   where:"Any game that looks good. And every AI you have talked to."},
+ SpaceX:{icon:"🚀", short:"Rockets that land again.",
+   what:"SpaceX builds rockets that fly to space and then come back down and land upright on their legs, so the same rocket can fly again. They also put small internet satellites in the sky.",
+   where:"Starlink, the internet that comes from space instead of a cable."},
+ Amazon:{icon:"📦", short:"Parcels, and half the internet.",
+   what:"Amazon delivers parcels, and it also rents out enormous computers to other companies. A surprising number of the apps and websites you use are running on Amazon's computers right now.",
+   where:"The box with the arrow that looks like a smile."},
+ TSMC:{icon:"🏭", short:"Builds the chips everyone else designs.",
+   what:"Apple and NVIDIA draw the plans for their chips. TSMC is the factory in Taiwan that actually builds them, and it is better at it than anyone else in the world. Almost every phone and game console has a chip from there.",
+   where:"Inside your iPad, where you cannot see it."},
+ Meta:{icon:"💬", short:"WhatsApp and Instagram.",
+   what:"Meta owns WhatsApp and Instagram. Both are free to use, so Meta earns its money by showing adverts.",
+   where:"Every WhatsApp message to Oma."},
+ Tesla:{icon:"🚗", short:"Electric cars.",
+   what:"Tesla makes cars that plug in to charge instead of filling up with petrol, and is trying to teach them to drive themselves.",
+   where:"A car charging at a plug instead of standing at a petrol station."}
+};
 const INSTR={
   btc:{name:"Bitcoin",icon:"₿",risk:3,
     short:"Digital money. No company behind it.",
@@ -188,7 +230,7 @@ const INSTR={
     why:"When one company has a bad year, the other 1,499 carry you. It moves up more calmly and more often than it moves down.",
     care:"It grows slowly. In a bad year the whole world market can still drop by a fifth."},
   basket:{name:"Future basket",icon:"🚀",risk:2,
-    short:"Nine companies you already know, counted equally.",
+    short:"Nine companies you already know, counted equally. Tap any of them below.",
     why:"These companies build a lot of the things people want next. If they do well, the basket does better than the world fund.",
     care:"Nine companies is not many. If two of them stumble badly, you feel it."}
 };
@@ -747,8 +789,12 @@ function vSaving(c){
       '<span class="risk">'+"●".repeat(I.risk)+"○".repeat(3-I.risk)+' swing</span></button>';
   }).join("");
   const chips=COMPANIES.map(cn=>{
-    const s=S.prices.basket[cn], p=(s.px&&s.base)?s.px/s.base*100:100;
-    return '<span class="chipco">'+cn+' <b>'+pct(p-100)+'</b></span>';
+    const sl=S.prices.basket[cn], p=(sl.px&&sl.base)?sl.px/sl.base*100:100, I=CO[cn];
+    return '<button class="corow" onclick="explainCompany('+jsq(cn)+')">'+
+      '<span class="coico">'+I.icon+'</span>'+
+      '<span class="grow"><span class="coname">'+cn+'</span>'+
+      '<span class="sub">'+I.short+'</span></span>'+
+      '<span class="money">'+pct(p-100)+'</span></button>';
   }).join("");
   const hold=inv.open.map(d=>{
     const p=(d.value/d.eur-1)*100;
@@ -773,7 +819,9 @@ function vSaving(c){
    '<section><h2>Where do you want to save?</h2><div class="grid3">'+choices+'</div>'+
    '<p class="sub" style="margin:8px 0 0">'+INSTR[BUY].short+' '+
    '<a href="#" onclick="explainInstrument(\''+BUY+'\');return false;" style="color:inherit">Tell me more</a></p>'+
-   (BUY==="basket"?'<div class="baskets">'+chips+'</div>':'')+
+   (BUY==="basket"?'<div class="card" style="margin-top:10px">'+chips+
+     '<p class="sub" style="margin:12px 0 0">Tap a company to find out what it actually does. '+
+     'All nine count the same: each one is a ninth of the basket.</p></div>':'')+
    '<div style="margin-top:12px;display:flex;gap:8px;flex-wrap:wrap">'+
    '<button class="btn" onclick="addDeposit()">Invest money</button>'+
    '<button class="btn ghost" onclick="explainSaving()">How does saving work?</button></div>'+
@@ -1208,6 +1256,41 @@ function explainInstrument(k){
    '<h4>What to watch out for</h4><p>'+I.care+'</p>'+
    '<h4>How much it swings</h4><p>'+"●".repeat(I.risk)+"○".repeat(3-I.risk)+
    ' — '+(I.risk===1?"the calmest of the three.":I.risk===2?"somewhere in between.":"the wildest of the three.")+'</p>'+
+   (k==="btc"? '' :
+     '<p class="sub">Owning this means owning small pieces of real companies. '+
+     '<a href="#" onclick="explainShares();return false;" style="color:inherit">What is a share?</a></p>')+
+   '<div class="dlgbtns"><button class="btn ghost" onclick="explainSaving()">How saving works</button>'+
+   '<button class="btn" onclick="dlg.close()">Got it</button></div>';
+  if(!dlg.open) dlg.showModal();
+}
+function explainCompany(cn){
+  const I=CO[cn], sl=S.prices.basket[cn], p=(sl.px&&sl.base)? sl.px/sl.base*100 : null;
+  dlgBody.innerHTML='<h3>'+I.icon+' '+esc(cn)+'</h3>'+
+   '<p>'+I.what+'</p>'+
+   '<h4>Where you have seen it</h4><p>'+I.where+'</p>'+
+   (p!==null? '<h4>Since you started watching</h4><p>'+pct(p-100)+'</p>' : '')+
+   '<p class="sub">One of the nine companies in the Future basket. Each one counts the same, '+
+   'so this company is a ninth of it.</p>'+
+   '<div class="dlgbtns"><button class="btn ghost" onclick="explainShares()">What is a share?</button>'+
+   '<button class="btn" onclick="dlg.close()">Got it</button></div>';
+  if(!dlg.open) dlg.showModal();
+}
+function explainShares(){
+  dlgBody.innerHTML='<h3>What is a share?</h3>'+
+   '<p>A share is a tiny piece of a real company. Buy one and a very small part of that '+
+   'company belongs to you.</p>'+
+   '<h4>Why the price moves</h4>'+
+   '<p>Nobody sets the price. It is simply whatever people are willing to pay for a piece '+
+   'that day. If a company sells more and more, other people want a piece too and will pay '+
+   'more for yours. If it starts doing badly, they will pay less.</p>'+
+   '<h4>So the price is a guess</h4>'+
+   '<p>It is really a guess about the future, made by everybody at once. That is why it '+
+   'changes every day, and why nobody can tell you what it will do next. Anyone who says '+
+   'they know for certain is guessing too.</p>'+
+   '<h4>The Future basket</h4>'+
+   '<p>The basket holds nine of these companies instead of one. If one has a terrible year '+
+   'while another has a great one, they pull against each other and the basket moves less '+
+   'than either of them.</p>'+
    '<div class="dlgbtns"><button class="btn ghost" onclick="explainSaving()">How saving works</button>'+
    '<button class="btn" onclick="dlg.close()">Got it</button></div>';
   if(!dlg.open) dlg.showModal();
