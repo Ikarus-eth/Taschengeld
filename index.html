@@ -518,6 +518,29 @@ function weekStats(k){
   }
   return {weeks:out, qualified:rank, nowWi};
 }
+/* The challenge runs in whole Monday-to-Sunday weeks, so the deadline is the
+   Sunday that closes the last week, not start + weeks*7. */
+function challengeEnd(k){
+  const kid=K(k);
+  return addD(monday(new Date(kid.start+"T12:00:00")), kid.weeks*7-1);
+}
+function weekEnd(k,i){
+  return addD(monday(new Date(K(k).start+"T12:00:00")), i*7+6);
+}
+function daysUntil(d){ return Math.round((d-today())/DAY); }
+function humanLeft(n){
+  if(n<0) return "over";
+  if(n===0) return "today is the last day";
+  if(n===1) return "1 day to go";
+  if(n<14) return n+" days to go";
+  const w=Math.floor(n/7), d=n%7;
+  return w+" weeks"+(d? " and "+d+(d===1?" day":" days") : "")+" to go";
+}
+function longDate(d){
+  const o={weekday:"long",day:"numeric",month:"long"};
+  if(d.getFullYear()!==today().getFullYear()) o.year="numeric";
+  return d.toLocaleDateString("en-GB",o);
+}
 function wordFull(kid){ return kid.wordRate? Math.round(kid.wordCap/kid.wordRate) : 0; }
 function wordEditable(k,i){
   const nowWi=weekIndex(k,today());
@@ -707,18 +730,45 @@ function stairs(c){
    '<p class="sub" style="margin:10px 0 0">'+c.ws.qualified+' of '+K().weeks+
    ' weeks done. A missed week costs you nothing — it only takes longer to reach the top step.</p></div></section>';
 }
+function deadlineCard(){
+  const kid=K(), st=new Date(kid.start+"T12:00:00"), end=challengeEnd(KID), t=today();
+  if(t<st) return '<section><h2>When</h2><div class="card">'+
+    '<div style="font-size:21px;font-weight:700">Starts '+longDate(st)+'</div>'+
+    '<div class="sub">Then you have '+kid.weeks+' weeks, up to and including '+longDate(end)+'.</div>'+
+    '</div></section>';
+  const left=daysUntil(end);
+  if(left<0) return '<section><h2>When</h2><div class="card">'+
+    '<div style="font-size:21px;font-weight:700">Finished on '+longDate(end)+'</div>'+
+    '<div class="sub">The '+kid.weeks+' weeks are over, so nothing new can be earned. '+
+    'Everything you did earn is still yours.</div></div></section>';
+  const wi=Math.min(weekIndex(KID,t)+1, kid.weeks);
+  return '<section><h2>Time left</h2><div class="card">'+
+   '<div style="font-size:21px;font-weight:700">'+humanLeft(left)+'</div>'+
+   '<div class="sub">Everything below has to be done by '+longDate(end)+'.</div>'+
+   '<div class="bar"><i class="b2" style="width:'+Math.round(wi/kid.weeks*100)+'%"></i></div>'+
+   '<div class="legend"><div>week '+wi+' of '+kid.weeks+'</div>'+
+   '<div style="text-align:right">last day '+dshort(iso(end))+'</div></div>'+
+   '</div></section>';
+}
 function vGoals(c){
   const kid=K();
+  const end=challengeEnd(KID), endShort=dshort(iso(end)), over=daysUntil(end)<0;
   const ms=kid.milestones.length? '<section><h2>Sport</h2><div class="card">'+
     kid.milestones.map(m=>'<div class="row"><div class="check '+(m.done?"on":"")+'"></div>'+
-    '<div class="grow"><div>'+esc(m.label)+'</div>'+(m.done?'<div class="sub">done on '+dshort(m.done)+'</div>':'')+
+    '<div class="grow"><div>'+esc(m.label)+'</div><div class="sub">'+
+    (m.done? "done on "+dshort(m.done) : over? "not reached in time" : "by "+endShort)+'</div>'+
     '</div><div class="money">'+fmt(m.eur)+'</div></div>').join("")+'</div></section>' : "";
   const bk=BOOKS[KID].map((eur,i)=>{
     const b=kid.books[i];
     return '<div class="row"><div class="check '+(b?"on":"")+'"></div><div class="grow"><div>'+
-      (b?esc(b.title):"Book "+(i+1))+'</div><div class="sub">'+(b?dshort(b.date):esc(kid.bookMin))+
+      (b?esc(b.title):"Book "+(i+1))+'</div><div class="sub">'+
+      (b? dshort(b.date) : esc(kid.bookMin)+" · by "+endShort)+
       '</div></div><div class="money">'+fmt(eur)+'</div></div>';
   }).join("");
+  const bookLeft=BOOKS[KID].length-kid.books.length;
+  const bookNote=bookLeft===0? '<p class="sub" style="margin:12px 0 0">All '+BOOKS[KID].length+' books done.</p>'
+    : '<p class="sub" style="margin:12px 0 0">'+bookLeft+(bookLeft===1?" book":" books")+' still to read'+
+      (over? ", but the time is up." : " before "+longDate(end)+".")+'</p>';
   const bonus = kid.bonusMinutes? '<section><h2>Extra bonus</h2><div class="card"><div class="row">'+
     '<div class="grow"><div>'+kid.bonusDays+'x '+kid.bonusMinutes+' minutes in one week</div>'+
     '<div class="sub">'+c.ws.weeks.filter(w=>w.bonus).length+' weeks with the bonus so far</div></div>'+
@@ -731,7 +781,9 @@ function vGoals(c){
       return '<div class="row"><button class="check '+(got?"on":"")+'" '+(ed?"":"disabled ")+
         'onclick="toggleWordWeek('+i+')" aria-pressed="'+got+'"></button>'+
         '<div class="grow"><div>'+full+' new words marked</div>'+
-        '<div class="sub">'+(i===nowWi?"this week":"last week")+'</div></div>'+
+        '<div class="sub">'+(i===nowWi? "this week · until Sunday "+dshort(iso(weekEnd(KID,i)))
+          : "last week · you can still tick this until Sunday "+dshort(iso(weekEnd(KID,nowWi))))+
+        '</div></div>'+
         '<div class="money">'+fmt(kid.wordCap)+'</div></div>';
     }).join("");
     words='<section><h2>New words</h2><div class="card">'+
@@ -742,7 +794,8 @@ function vGoals(c){
       'Once you have '+full+' of them in a week, tick the box and you get '+fmt(kid.wordCap)+'.</p>'+
       '</div></section>';
   }
-  return hero(c)+ms+'<section><h2>Books</h2><div class="card">'+bk+'</div></section>'+bonus+words;
+  return hero(c)+deadlineCard()+ms+
+    '<section><h2>Books</h2><div class="card">'+bk+bookNote+'</div></section>'+bonus+words;
 }
 function vMoney(c){
   const kid=K();
