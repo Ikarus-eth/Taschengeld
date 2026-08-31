@@ -61,22 +61,31 @@ retroactively distorts holdings.
 
 ## Price feed
 
-Manual refresh only, from the parent view. Nothing fetches on page load, so a dead API
+Manual refresh only, from the parent view. Nothing fetches on page load, so a dead source
 never blocks the child from logging a reading day. Failures leave the last price in place.
+
+**No API key.** Prices come from a Google Sheet published with "anyone with the link can
+view". The sheet holds two columns — key and value in EUR — and uses `GOOGLEFINANCE()`
+formulas that Google keeps current. The parent view has a "Vorlage für die Tabelle" button
+that copies the exact rows to paste into A1.
+
+Keys the app reads: `EURIDR`, `btc`, `etf`, and the nine company names. Values are read in
+EUR, so USD tickers are divided by `CURRENCY:EURUSD` inside the sheet — the app does no
+currency conversion of its own.
+
+The app accepts either a normal sheet URL or a published-CSV URL, and tries the `gviz`
+and `pub?output=csv` endpoint shapes in turn. The CSV parser handles quoted fields and
+both `1.234,56` and `1,234.56` number formats, so the sheet's locale doesn't matter.
+
+Fallbacks when the sheet is unreachable or a row is missing:
 
 | Source | Covers | Key |
 |---|---|---|
-| `api.frankfurter.app` | EUR→USD and EUR→IDR (ECB daily) | none |
 | `api.coinbase.com/v2/prices/BTC-EUR/spot` | Bitcoin | none |
-| `finnhub.io/api/v1/quote` | URTH, GOOGL, MSFT, NVDA, AAPL, AMZN, TSM, META, TSLA | free key |
+| `api.frankfurter.app` | EUR→IDR (ECB daily) | none |
 
-The Finnhub key is entered in the parent view and stored in `localStorage`. **It is never
-committed to this repo.** Without it, Bitcoin and FX still update; the eight stocks do not.
-
-SpaceX is private and has no feed. Its value is set by hand in the parent view, indexed to
-100 at the start.
-
-Stock quotes arrive in USD and are converted to EUR with the ECB rate.
+SpaceX is private and has no feed. Set it by hand, either as a row in the sheet or in the
+parent view, indexed to 100 at the start.
 
 ## Parent view
 
