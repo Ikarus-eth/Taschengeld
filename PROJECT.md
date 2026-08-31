@@ -11,7 +11,10 @@ screen; the parent view is PIN-gated. The whole interface is in English.
 
 - Repo: `Ikarus-eth/Taschengeld`, branch `main`, root folder
 - Live: https://ikarus-eth.github.io/Taschengeld/
-- Files: `index.html` (the entire app), `README.md` (spec), `PROJECT.md` (this file)
+- Files: `index.html` (the entire app), `apple-touch-icon.png` / `icon-512.png` /
+  `favicon-32.png` / `manifest.webmanifest` (home screen assets),
+  `tools/make-icons.py` (regenerates those PNGs, run by hand, never at deploy),
+  `README.md` (spec), `PROJECT.md` (this file)
 
 ## GitHub access
 
@@ -66,8 +69,12 @@ that is not a site failure. Use `raw.githubusercontent.com`, which is allowliste
 - **Test before pushing.** Extract the `<script>` block, `node --check` it, then stub the
   DOM and run the earnings and savings engines against full-completion and edge scenarios.
   Prior chats caught real bugs this way. Do not push untested changes.
-- **No build step, no dependencies, no service worker.** `index.html` is self-contained.
+- **No build step, no dependencies, no service worker.** `index.html` is self-contained
+  apart from static icon files, which the browser fetches but the app never reads.
   A service worker in an earlier project (blitzword) caused a cache bug that cost hours.
+- **Every asset path is relative.** The site is served from `/Taschengeld/`, not a domain
+  root, so a leading slash points at `ikarus-eth.github.io/` and 404s. This is why iOS
+  could not auto-discover `/apple-touch-icon.png` and why the link tag is required.
 - **Nothing is fetched during load, and no fetch is ever awaited on the critical path.**
   Prices now also auto-refresh in the background — 1.5 s after the first paint and on
   returning to the app, throttled to once per 6 hours, 9 s timeout, silent on failure.
@@ -154,6 +161,20 @@ one-time launch anchor, not a template for future cycles.
 - **The review boundary is a sequence number, not a timestamp.** The family moves between
   UTC+8 and UTC+1/+2, and ISO timestamps are UTC while the day headings are local. Derive
   the day an action happened with `logDayOf(e)`, never by slicing `e.t`.
+
+## Home screen icon
+
+`apple-touch-icon.png`, 180x180, opaque RGB, full bleed. iOS composites transparency onto
+black and applies its own squircle mask, so the source must have no alpha and no rounded
+corners of its own. PNG only; SVG and data URIs do not work for a web clip.
+
+Four designs live in `tools/make-icons.py`: `spines-ink` (shipped), `book-ink`,
+`book-juna`, `spines-paper`. To switch: `python3 tools/make-icons.py book-ink` and push the
+three PNGs. Nothing in `index.html` changes.
+
+**iOS caches the web clip icon at the moment the shortcut is created.** Changing the icon
+does nothing to a shortcut that already exists. The shortcut has to be deleted from the
+home screen and re-added, after a hard reload in Safari.
 
 ## Things deliberately not built
 
