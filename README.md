@@ -19,9 +19,10 @@ it into a squircle itself and fills any transparency with black. All icon hrefs 
 relative because the site is served from `/Taschengeld/`, so iOS cannot find an icon at the
 domain root on its own.
 
-Regenerate with `python3 tools/make-icons.py [spines-ink|book-ink|book-juna|spines-paper]`,
-which writes `apple-touch-icon.png`, `icon-512.png` and `favicon-32.png`. Needs Pillow, runs
-by hand, is not part of any deploy.
+The artwork lives at `tools/icon-source.png`. To change the icon, replace that file and run
+`python3 tools/prepare-icon.py`, which flattens any transparency, floods the corners with
+the background colour so nothing is masked twice, and writes `apple-touch-icon.png`,
+`icon-512.png` and `favicon-32.png`. Needs Pillow, runs by hand, is not part of any deploy.
 
 Changing the icon does not update a shortcut that is already on the home screen: iOS caches
 the icon when the shortcut is created. Delete it and add it again.
