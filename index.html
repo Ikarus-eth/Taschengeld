@@ -144,6 +144,8 @@ table{width:100%;border-collapse:collapse;font-size:15px;}
 td{padding:7px 0;border-top:1px solid var(--line);}
 td:last-child{text-align:right;font-variant-numeric:tabular-nums;font-weight:600;}
 tr:first-child td{border-top:0;}
+tr.total td{border-top:2px solid var(--ink);font-weight:700;}
+td.pos{color:var(--gold);} td.neg{color:var(--warn);}
 .feedlog{font-size:13px;color:var(--ink-soft);margin-top:10px;white-space:pre-line;}
 .logrow{display:flex;gap:10px;align-items:flex-start;padding:9px 0;border-top:1px solid var(--line);font-size:15px;}
 .logrow .logt{flex:none;width:44px;color:var(--ink-soft);font-size:13px;padding-top:2px;}
@@ -377,6 +379,8 @@ function idr(n){ return "Rp "+Math.round(n).toLocaleString("en-US"); }
 function eur(n){ const neg=n<-0.0001,a=Math.abs(n);
   return (neg?"−":"")+"€"+(Math.round(a*100)/100).toFixed(2).replace(/\.00$/,""); }
 function pct(n){ return (n>=0?"+":"−")+Math.abs(n).toFixed(1)+"%"; }
+/* a signed amount, so a gain and a loss look different at a glance */
+function fmtPM(n){ return (n>=0.005?"+ ":n<=-0.005?"− ":"")+fmt(Math.abs(n)); }
 
 /* ---- prices ---- */
 function level(inst){
@@ -624,17 +628,21 @@ function calc(k){
   const extraEur=(kid.extras||[]).reduce((s,x)=>s+x.eur,0);
   const paidOut=kid.payouts.reduce((s,x)=>s+x.eur,0);
   const inv=invested(k);
-  /* every euro ever invested has left the balance (principalAll); a sale brings
-     back proceeds. Subtracting only the open principal would hand back the
-     stake for free on every sale. */
-  const cash=earned+allowance+extraEur+inv.matchPaid+inv.proceeds-spent-inv.principalAll-paidOut;
+  /* a sale hands back a stake the child already owned, so the whole sale amount
+     is not income — only the difference the price made is. Money out is
+     therefore just the stake still tied up in open holdings. Algebraically the
+     same balance as counting gross proceeds minus every euro ever invested,
+     but it keeps buying and selling at the same price from inflating any total.
+       proceeds - principalAll == realized - principalOpen                    */
+  const cash=earned+allowance+extraEur+inv.matchPaid+inv.realized-spent-inv.principalOpen-paidOut;
   return {ws,weekEur,bonusEur,bonusLeft,futureWeek,bookEur,bookLeft,wordEur,wordLeft,wordWeeks,
     msEur,msLeft,earned,open,allowance,extraEur,spent,paidOut,cash,remain,inv};
 }
 function daysHeld(d){ return Math.round((today()-new Date(d.date+"T12:00:00"))/DAY); }
 function invested(k){
   const kid=K(k);
-  let principalOpen=0,principalAll=0,value=0,matchPaid=0,matchOpen=0,proceeds=0; const open=[],sold=[];
+  let principalOpen=0,principalAll=0,soldPrincipal=0,value=0,matchPaid=0,matchOpen=0,proceeds=0;
+  const open=[],sold=[];
   for(const d of kid.deposits){
     /* whole days, both ends anchored at noon: the countdown ticks once a day and
        does not wobble with the time of day or a DST change */
@@ -642,6 +650,7 @@ function invested(k){
     principalAll+=d.eur;
     if(d.sold){
       proceeds+=d.soldValue||0;
+      soldPrincipal+=d.eur;
       if(d.matchClaimed) matchPaid+=d.eur*0.5;
       sold.push(d);
       continue;
@@ -652,7 +661,12 @@ function invested(k){
     if(vested) matchPaid+=d.eur*0.5; else matchOpen+=d.eur*0.5;
     open.push(Object.assign({},d,{value:val,vested,daysLeft:Math.max(0,365-held)}));
   }
-  return {principalOpen,principalAll,value,matchPaid,matchOpen,proceeds,open,sold};
+  /* realized is the only part of a sale that changes what the child is worth.
+     turnover is the money that has gone in and come back out again — worth
+     showing, but it is a volume, not income. */
+  const realized=proceeds-soldPrincipal, unrealized=value-principalOpen;
+  return {principalOpen,principalAll,soldPrincipal,value,matchPaid,matchOpen,proceeds,
+    realized,unrealized,turnover:soldPrincipal,open,sold};
 }
 
 /* ---- views ---- */
@@ -845,10 +859,30 @@ function vMoney(c){
     (x.note?" · "+x.note:"")+'</div></div><div class="money" style="'+(x.eur>0?"color:var(--gold)":"")+'">'+
     (x.eur>0?"+ ":"− ")+fmt(Math.abs(x.eur))+'</div></div>').join("")
     || '<p class="sub" style="margin:0">Nothing spent yet.</p>';
+  /* earned means earned: challenges, pocket money, gifts. Nothing an investment
+     did belongs in this number, or buying and selling at one price would look
+     like income. */
+  const inv=c.inv, income=c.earned+c.allowance+c.extraEur;
+  const gain=inv.realized, gainCls=gain>0.005?"pos":gain<-0.005?"neg":"";
+  const rest=
+   '<section><h2>What is left</h2><div class="card"><table>'+
+   '<tr><td>Money in total</td><td>'+fmt(income)+'</td></tr>'+
+   (inv.matchPaid?'<tr><td>Saving bonus from Papa</td><td class="pos">+ '+fmt(inv.matchPaid)+'</td></tr>':'')+
+   (inv.sold.length?'<tr><td>'+(gain<-0.005?"Loss on what you sold":"Profit on what you sold")+
+     '</td><td class="'+gainCls+'">'+fmtPM(gain)+'</td></tr>':'')+
+   (c.spent?'<tr><td>Spent</td><td>− '+fmt(c.spent)+'</td></tr>':'')+
+   (inv.principalOpen?'<tr><td>Still invested<div class="sub">worth '+fmt(inv.value)+' right now</div></td>'+
+     '<td>− '+fmt(inv.principalOpen)+'</td></tr>':'')+
+   (c.paidOut?'<tr><td>Already paid out</td><td>− '+fmt(c.paidOut)+'</td></tr>':'')+
+   '<tr class="total"><td>Your balance</td><td>'+fmt(c.cash)+'</td></tr></table>'+
+   (inv.turnover?'<p class="sub" style="margin:12px 0 0">You have put '+fmt(inv.turnover)+
+     ' into investments and taken it out again. Buying and selling by itself changes nothing — '+
+     'only the price moving up or down does.</p>':'')+
+   '</div></section>';
   return '<div class="hero"><h1>Your balance</h1><div class="big num" style="color:'+(c.cash<0?"var(--warn)":"inherit")+'">'+fmt(c.cash)+'</div>'+
-   '<div class="legend" style="margin-top:14px"><div>came in<b class="num">'+fmt(c.earned+c.allowance+c.extraEur+c.inv.matchPaid+c.inv.proceeds)+'</b></div>'+
+   '<div class="legend" style="margin-top:14px"><div>money in<b class="num">'+fmt(income)+'</b></div>'+
    '<div>spent<b class="num">'+fmt(c.spent)+'</b></div>'+
-   '<div style="text-align:right">invested<b class="num">'+fmt(c.inv.principalOpen)+'</b></div></div></div>'+
+   '<div style="text-align:right">invested<b class="num">'+fmt(inv.principalOpen)+'</b></div></div></div>'+
    '<section><h2>Where the money comes from</h2><div class="card"><table>'+
    '<tr><td>Reading, week by week</td><td>'+fmt(c.weekEur)+'</td></tr>'+
    (kid.bonusMinutes?'<tr><td>Extra bonus</td><td>'+fmt(c.bonusEur)+'</td></tr>':'')+
@@ -857,10 +891,8 @@ function vMoney(c){
    (kid.milestones.length?'<tr><td>Sport goals</td><td>'+fmt(c.msEur)+'</td></tr>':'')+
    '<tr><td>Pocket money<div class="sub">next '+fmt(kid.allowance)+' on '+dshort(iso(nextPayday(kid,today())))+'</div></td><td>'+fmt(c.allowance)+'</td></tr>'+
    (c.extraEur?'<tr><td>Gifts and extras</td><td>'+fmt(c.extraEur)+'</td></tr>':'')+
-   (c.inv.matchPaid?'<tr><td>Saving bonus from Papa</td><td>'+fmt(c.inv.matchPaid)+'</td></tr>':'')+
-   (c.inv.proceeds?'<tr><td>Investments sold</td><td>'+fmt(c.inv.proceeds)+'</td></tr>':'')+
-   (c.paidOut?'<tr><td>already paid out</td><td>− '+fmt(c.paidOut)+'</td></tr>':'')+
-   '</table></div></section>'+
+   '<tr class="total"><td>Money in total</td><td>'+fmt(income)+'</td></tr>'+
+   '</table></div></section>'+rest+
    '<section><h2>Spending and extras</h2><div class="card">'+list+
    '<div style="margin-top:14px;display:flex;gap:8px;flex-wrap:wrap">'+
    '<button class="btn ghost" onclick="addSpend()">Add a purchase</button>'+
@@ -893,12 +925,20 @@ function vSaving(c){
      '<div style="text-align:right"><div class="money">'+fmt(d.value)+'</div><div class="sub">'+pct(p)+'</div>'+
      '<button class="btn tiny ghost" style="margin-top:6px" onclick="sellDeposit('+jsq(d.id)+')">Sell</button></div></div>';
   }).join("") || '<p class="sub" style="margin:0">Nothing invested yet.</p>';
+  /* the headline number here is what the sale changed, not what came back: the
+     stake was already hers, so showing it again reads as free money */
   const soldList=inv.sold.length? '<section><h2>Already sold</h2><div class="card">'+inv.sold.slice().reverse().map(d=>{
-    const p=(d.soldValue/d.eur-1)*100;
-    return '<div class="row"><div class="grow"><div>'+INSTR[d.instrument].name+' · '+fmt(d.eur)+' put in</div>'+
+    const g=(d.soldValue||0)-d.eur, p=(d.soldValue/d.eur-1)*100;
+    return '<div class="row"><div class="grow"><div>'+INSTR[d.instrument].name+' · '+fmt(d.eur)+
+     ' put in, '+fmt(d.soldValue)+' back</div>'+
      '<div class="sub">sold '+dshort(d.soldDate||d.date)+' · '+pct(p)+(d.matchClaimed?" · bonus kept":" · bonus given up")+'</div></div>'+
-     '<div class="money">'+fmt(d.soldValue)+'</div></div>';
-  }).join("")+'</div></section>' : "";
+     '<div class="money" style="'+(g>0.005?"color:var(--gold)":g<-0.005?"color:var(--warn)":"")+'">'+fmtPM(g)+'</div></div>';
+  }).join("")+
+   '<div class="row"><div class="grow"><div><b>'+(inv.realized<-0.005?"Lost in total":"Made in total")+'</b>'+
+   '</div><div class="sub">on '+fmt(inv.turnover)+' put in and taken back out</div></div>'+
+   '<div class="money" style="'+(inv.realized>0.005?"color:var(--gold)":inv.realized<-0.005?"color:var(--warn)":"")+'">'+
+   fmtPM(inv.realized)+'</div></div>'+
+   '</div></section>' : "";
   const stamp=S.feed.updated? "Prices from "+new Date(S.feed.updated).toLocaleString("en-GB",{day:"numeric",month:"short",hour:"2-digit",minute:"2-digit"}) : "No prices fetched yet";
   return '<div class="hero"><h1>Invested</h1><div class="big num">'+fmt(inv.value)+'</div>'+
    '<div class="legend" style="margin-top:14px"><div>put in<b class="num">'+fmt(inv.principalOpen)+'</b></div>'+
