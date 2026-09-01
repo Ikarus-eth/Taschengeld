@@ -144,9 +144,24 @@ freezes `soldValue` at that day's price; later price moves do not change a compl
 Vested sales keep the match (`matchClaimed`). Sold deposits stay in the ledger and are
 listed under "Already sold".
 
-Cash accounting: every euro ever deposited is debited from the balance and a sale credits
-its proceeds back. Subtracting only *open* principal would hand the stake back for free on
-every sale.
+Cash accounting: a sale hands back a stake the child already owned, so the sale amount is
+not income — only the difference the price made is. The balance therefore counts the
+**realised** gain or loss (`proceeds - soldPrincipal`) as money in, and only the principal
+still tied up in **open** holdings as money out. This is algebraically identical to
+crediting gross proceeds and debiting every euro ever deposited
+(`proceeds - principalAll == realized - principalOpen`), so no stored data changes, but it
+keeps a buy and a sell at the same price from inflating any total the child sees. `invested()`
+also returns `unrealized` (open value minus open principal) and `turnover` (principal that
+has gone in and come back out again) — turnover is a volume, never income.
+
+**Money screen.** "Where the money comes from" lists only money the child actually
+received — the challenge lines, pocket money, gifts and extras — and closes with a
+**Money in total** subtotal. It deliberately does not say *earned*, because the Goals
+screen already uses that word for challenge money alone and pocket money is unconditional.
+"What is left" then reconciles to the balance: money in, plus the saving match, plus or
+minus the realised investment result, minus spending, minus principal still invested,
+minus payouts already made. A note underneath states the turnover when there is any, so a
+buy-and-sell round trip reads as volume rather than as income.
 
 The Saving screen carries a three-level swing indicator per instrument, a per-instrument
 explainer (why people like it / what to watch out for), and a "How saving works" dialog
