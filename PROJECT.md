@@ -111,9 +111,19 @@ that is not a site failure. Use `raw.githubusercontent.com`, which is allowliste
   retroactively distorts existing holdings.
 - **Selling is allowed at any time.** A sale freezes `soldValue` at that day's price, keeps
   the match only if the deposit was already 365 days old, and leaves the record in the
-  ledger. Cash accounting debits *every* euro ever deposited, not just the open principal —
-  subtracting only open principal returns the stake for free on each sale. That bug was
-  latent in the ledger until selling existed; it is fixed and covered by a test.
+  ledger.
+- **A sale is not income.** The stake coming back was already the child's money, so only
+  the realised gain or loss counts. `calc()` adds `inv.realized` and subtracts
+  `inv.principalOpen`; the earlier form added gross `proceeds` and subtracted
+  `principalAll`. The two are algebraically identical
+  (`proceeds - principalAll == realized - principalOpen`), so no stored data or balance
+  changed, but the gross form made a €1 buy-and-sell round trip show up as €1 of income on
+  the Money screen. Buying and selling at one price must move no total the child sees.
+  Gross proceeds may appear as *turnover*, never as earnings. Both forms are asserted equal
+  in the test suite; do not reintroduce the gross form in a view.
+- **The word *earned* means challenge money only.** The Goals hero uses it that way. The
+  Money screen therefore says **money in** for challenges + pocket money + gifts, and never
+  *earned* — pocket money is unconditional, so calling it earned contradicts the rule below.
 - **Spending can be entered in rupiah**, converted at that day's rate and frozen there
   (`idr`, `fx`, `eur` all stored). Balances themselves stay in euro.
 - **Extra money** (gifts, birthday money) is a third category, separate from pocket money
