@@ -128,6 +128,22 @@ that is not a site failure. Use `raw.githubusercontent.com`, which is allowliste
   (`idr`, `fx`, `eur` all stored). Balances themselves stay in euro.
 - **Extra money** (gifts, birthday money) is a third category, separate from pocket money
   and challenge payouts. It lands in the balance but never counts as *earned*.
+- **The compounding playground is a toy, not a projection of her holdings.** It reads
+  nothing from the ledger and writes nothing back. Wiring it to her real balance was
+  considered and dropped: the point is to let her turn the dials to fifty years and a
+  million, and a real-balance view cannot do that without implying a forecast. Keeping it
+  stateless is also why it needs no migration and cannot corrupt anything.
+- **Its sliders repaint in place, never through `render()`.** `growPaint()` swaps the
+  readout, the chart and the labels; re-creating the `<input>` under a finger that is still
+  dragging it cancels the drag on iOS. Mode switches may use `render()`, because they
+  change which sliders exist. This is easy to undo by accident.
+- **The playground stays honest about what it is.** A note under the sliders says the
+  machine pretends the price climbs by the same amount every year and that real prices do
+  not; the rate hint anchors 1% to a bank account, ~7% to the world fund's long-run average
+  and 12% to a lucky run rather than a plan; the explainer has a paragraph on inflation.
+  A compounding demo that quietly promises a million is the wrong lesson.
+- **The horizon slider shows her age, not just the year count.** Per-child `born` fields
+  (Juna 2016, Artus 2019) feed it. "50 years" means nothing at ten; "you are 60" does.
 - **Investment copy is explained through objects she has touched**, never through finance
   vocabulary. Each of the nine basket companies has a "where you have seen it" line, and
   the concept ladder is company → share → basket → the 50% match. If a new instrument is
