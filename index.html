@@ -146,6 +146,24 @@ td:last-child{text-align:right;font-variant-numeric:tabular-nums;font-weight:600
 tr:first-child td{border-top:0;}
 tr.total td{border-top:2px solid var(--ink);font-weight:700;}
 td.pos{color:var(--gold);} td.neg{color:var(--warn);}
+.seg{display:flex;gap:6px;background:var(--paper);border:1.5px solid var(--line);border-radius:12px;padding:4px;}
+.seg button{flex:1;border:0;background:none;border-radius:9px;padding:11px 6px;min-height:48px;
+  font-weight:600;font-size:15px;line-height:1.2;color:var(--ink-soft);font-family:inherit;}
+.seg button[aria-pressed="true"]{background:var(--card);color:var(--ink);box-shadow:0 1px 3px rgba(27,33,24,.14);}
+.slide{padding:14px 0;border-top:1px solid var(--line);}
+.slide:first-child{border-top:0;padding-top:0;}
+.slab{display:flex;justify-content:space-between;align-items:baseline;gap:10px;
+  font-size:14px;font-weight:600;color:var(--ink-soft);margin-bottom:2px;}
+.slab b{font-size:18px;color:var(--ink);white-space:nowrap;}
+input[type="range"]{-webkit-appearance:none;appearance:none;width:100%;height:40px;margin:0;
+  padding:0;border:0;background:transparent;}
+input[type="range"]::-webkit-slider-runnable-track{height:8px;border-radius:4px;background:var(--line);}
+input[type="range"]::-webkit-slider-thumb{-webkit-appearance:none;appearance:none;width:30px;height:30px;
+  border-radius:50%;background:var(--accent);border:3px solid var(--card);margin-top:-11px;
+  box-shadow:0 1px 4px rgba(27,33,24,.3);}
+input[type="range"]::-moz-range-track{height:8px;border-radius:4px;background:var(--line);border:0;}
+input[type="range"]::-moz-range-thumb{width:26px;height:26px;border-radius:50%;background:var(--accent);
+  border:3px solid var(--card);box-shadow:0 1px 4px rgba(27,33,24,.3);}
 .feedlog{font-size:13px;color:var(--ink-soft);margin-top:10px;white-space:pre-line;}
 .logrow{display:flex;gap:10px;align-items:flex-start;padding:9px 0;border-top:1px solid var(--line);font-size:15px;}
 .logrow .logt{flex:none;width:44px;color:var(--ink-soft);font-size:13px;padding-top:2px;}
@@ -246,7 +264,7 @@ function fresh(){
     prices:{ btc:slot("BTC"), etf:slot("URTH"),
       basket:Object.fromEntries(COMPANIES.map(c=>[c, slot(TICKER[c])])) },
     kids:{
-      juna:{ name:"Juna", start:"2026-08-31", weeks:20, minDays:5, minutes:20,
+      juna:{ name:"Juna", born:2016, start:"2026-08-31", weeks:20, minDays:5, minutes:20,
         bonusMinutes:0, bonusDays:0, bonusEur:0,
         allowance:20, allowanceEvery:"month",
         bookMin:"200 pages or more, your own pick", wordRate:0.10, wordCap:1,
@@ -255,7 +273,7 @@ function fresh(){
           {id:"h10",label:"Handstand for 10 seconds",eur:80,done:null,due:"2026-12-25"},
           {id:"hw",label:"10 steps on your hands",eur:50,done:null,due:"2026-12-25"}],
         days:{}, books:[], words:{}, spend:[], deposits:[], payouts:[], extras:[] },
-      artus:{ name:"Artus", start:"2026-08-31", weeks:10, minDays:5, minutes:10,
+      artus:{ name:"Artus", born:2019, start:"2026-08-31", weeks:10, minDays:5, minutes:10,
         bonusMinutes:15, bonusDays:4, bonusEur:1,
         allowance:2, allowanceEvery:"week",
         bookMin:"An early reader, one every two weeks", wordRate:0, wordCap:0,
@@ -370,14 +388,21 @@ function jsq(v){
     .replace(/&/g,"&amp;").replace(/"/g,"&quot;").replace(/</g,"&lt;").replace(/>/g,"&gt;")+"'";
 }
 
+/* thousands separators on the euro side too.  Everyday balances are two or
+   three digits and look identical either way, but the compounding screen runs
+   to seven, and "€1000000" is not a number a child can read. */
+function euros(a){
+  const s=(Math.round(a*100)/100).toFixed(2).replace(/\.00$/,"").split(".");
+  return Number(s[0]).toLocaleString("en-US")+(s[1]?"."+s[1]:"");
+}
 function fmt(eur){
   const neg=eur<-0.0001, a=Math.abs(eur);
   if(CUR==="IDR") return (neg?"−":"")+"Rp "+(Math.round(a*S.fx/100)*100).toLocaleString("en-US");
-  return (neg?"−":"")+"€"+(Math.round(a*100)/100).toFixed(2).replace(/\.00$/,"");
+  return (neg?"−":"")+"€"+euros(a);
 }
 function idr(n){ return "Rp "+Math.round(n).toLocaleString("en-US"); }
 function eur(n){ const neg=n<-0.0001,a=Math.abs(n);
-  return (neg?"−":"")+"€"+(Math.round(a*100)/100).toFixed(2).replace(/\.00$/,""); }
+  return (neg?"−":"")+"€"+euros(a); }
 function pct(n){ return (n>=0?"+":"−")+Math.abs(n).toFixed(1)+"%"; }
 /* a signed amount, so a gain and a loss look different at a glance */
 function fmtPM(n){ return (n>=0.005?"+ ":n<=-0.005?"− ":"")+fmt(Math.abs(n)); }
@@ -671,16 +696,17 @@ function invested(k){
 
 /* ---- views ---- */
 function setKid(k){ KID=k; render(); }
-function setView(v){ VIEW=v; render(); }
+function setView(v){ if(v==="grow"||VIEW==="grow") window.scrollTo(0,0); VIEW=v; render(); }
 function toggleCur(){ CUR=CUR==="EUR"?"IDR":"EUR"; render(); }
 function render(){
   document.body.className=KID;
   tabJuna.setAttribute("aria-selected",KID==="juna");
   tabArtus.setAttribute("aria-selected",KID==="artus");
-  document.querySelectorAll("nav button").forEach(b=>b.setAttribute("aria-selected",b.dataset.v===VIEW));
+  document.querySelectorAll("nav button").forEach(b=>b.setAttribute("aria-selected",
+    b.dataset.v===VIEW || (VIEW==="grow" && b.dataset.v==="saving")));
   const c=calc(KID);
   view.innerHTML = VIEW==="today"?vToday(c): VIEW==="goals"?vGoals(c): VIEW==="money"?vMoney(c)
-    : VIEW==="saving"?vSaving(c): vParents(c);
+    : VIEW==="saving"?vSaving(c): VIEW==="grow"?vGrow(): vParents(c);
   foot.innerHTML='€1 = '+idr(S.fx)+' · <a href="#" onclick="toggleCur();return false;" style="color:inherit">show in '+(CUR==="EUR"?"rupiah":"euro")+'</a>';
 }
 function hero(c){
@@ -952,11 +978,206 @@ function vSaving(c){
      'All nine count the same: each one is a ninth of the basket.</p></div>':'')+
    '<div style="margin-top:12px;display:flex;gap:8px;flex-wrap:wrap">'+
    '<button class="btn" onclick="addDeposit()">Invest money</button>'+
-   '<button class="btn ghost" onclick="explainSaving()">How does saving work?</button></div>'+
+   '<button class="btn ghost" onclick="explainSaving()">How does saving work?</button>'+
+   '<button class="btn ghost" onclick="setView(\'grow\')">📈 What if I wait?</button></div>'+
    '<p class="sub" style="margin:10px 0 0">'+stamp+'</p>'+
    '<div class="warnbox">Leave your money in for a whole year and you get <b>50% on top of what you put in</b>. '+
    'Sell before the year is up and that bonus is gone. Prices can fall as well as rise.</div></section>'+
    '<section><h2>Your investments</h2><div class="card">'+hold+'</div></section>'+soldList;
+}
+
+/* ---- compounding playground ----
+   A separate screen hanging off Saving.  It answers the two questions a child
+   actually asks — "what does this turn into?" and "what do I have to put away
+   to get to X?" — with the same maths solved for a different unknown.
+   Monthly compounding, deposit at the end of each month: that is how her own
+   deposits land, and it keeps the goal solver a closed form rather than a
+   search.  Nothing here touches saved state; it is a toy, not a ledger. */
+let GROW={mode:"grow", start:50, month:10, rate:7, years:10, goal:10000};
+const GOALS=[500,1000,5000,10000,100000,1000000];
+
+function fvOf(p0,pmt,rate,months){
+  const i=rate/100/12;
+  if(Math.abs(i)<1e-12) return p0+pmt*months;
+  const g=Math.pow(1+i,months);
+  return p0*g+pmt*(g-1)/i;
+}
+function pmtFor(target,p0,rate,months){
+  if(months<=0) return 0;
+  const i=rate/100/12;
+  if(Math.abs(i)<1e-12) return (target-p0)/months;
+  const g=Math.pow(1+i,months);
+  return (target-p0*g)*i/(g-1);
+}
+function growState(){
+  const g=GROW, months=g.years*12;
+  const month=g.mode==="goal"? Math.max(0,pmtFor(g.goal,g.start,g.rate,months)) : g.month;
+  const end=fvOf(g.start,month,g.rate,months), paid=g.start+month*months;
+  return {month,months,end,paid,growth:end-paid,
+    share: end>0.005? (end-paid)/end*100 : 0,
+    double: g.rate>0.05? 72/g.rate : null,
+    reached: g.mode==="goal" && month<=0.005};
+}
+/* short money for chips and axis labels — fmt() spells out every digit, which
+   is unreadable at a million and unusable in rupiah */
+function fmtShort(e){
+  const v=(CUR==="IDR"? e*S.fx : e), s=(CUR==="IDR"? "Rp " : "€");
+  const trim=x=>x.replace(/\.0$/,"");
+  if(v>=1e9) return s+trim((v/1e9).toFixed(v<1e10?1:0))+"bn";
+  if(v>=1e6) return s+trim((v/1e6).toFixed(v<1e7?1:0))+"m";
+  if(v>=1e4) return s+Math.round(v/1000).toLocaleString("en-US")+"k";
+  return s+Math.round(v).toLocaleString("en-US");
+}
+function growAge(n){
+  const b=K().born;
+  return b? " · you are "+(today().getFullYear()-b+n) : "";
+}
+function growLabel(k){
+  if(k==="start") return fmt(GROW.start);
+  if(k==="month") return fmt(GROW.month);
+  if(k==="rate")  return String(Math.round(GROW.rate*10)/10)+"% a year";
+  return GROW.years+(GROW.years===1?" year":" years")+growAge(GROW.years);
+}
+function growSlider(k,label,min,max,step){
+  return '<div class="slide"><div class="slab"><span>'+label+'</span>'+
+   '<b class="num" id="lbl_'+k+'">'+growLabel(k)+'</b></div>'+
+   '<input type="range" min="'+min+'" max="'+max+'" step="'+step+'" value="'+GROW[k]+'" '+
+   'oninput="growSet(\''+k+'\',this.value)"></div>';
+}
+function growChipsHtml(){
+  return GOALS.map(v=>'<button class="choice" aria-pressed="'+(GROW.goal===v)+'" '+
+    'onclick="growSetGoal('+v+')">'+fmtShort(v)+'</button>').join("");
+}
+/* repaint in place rather than through render(): re-creating the <input> under
+   a finger that is still dragging it cancels the drag on iOS */
+function growSet(k,v){
+  GROW[k]= k==="rate"? Number(v) : Math.round(Number(v));
+  growPaint();
+}
+function growSetGoal(v){ GROW.goal=Number(v); growPaint(); }
+function growMode(m){ GROW.mode=m; render(); }
+function growPaint(){
+  const st=growState(), out=document.getElementById("growOut");
+  if(!out) return;
+  out.innerHTML=growOutHtml(st);
+  document.getElementById("growChart").innerHTML=growChartSvg(st);
+  const chips=document.getElementById("growChips");
+  if(chips) chips.innerHTML=growChipsHtml();
+  for(const k of ["start","month","rate","years"]){
+    const el=document.getElementById("lbl_"+k);
+    if(el) el.textContent=growLabel(k);
+  }
+}
+function growOutHtml(st){
+  const g=GROW, yrs=g.years+(g.years===1?" year":" years");
+  const head = g.mode==="goal"
+    ? (st.reached
+        ? '<h1>You are already there</h1><div class="big num">nothing</div>'+
+          '<p class="sub" style="margin:4px 0 0">The '+fmt(g.start)+' you already have grows past '+
+          fmtShort(g.goal)+' on its own in '+yrs+'.</p>'
+        : '<h1>Put away every month</h1><div class="big num">'+fmt(st.month)+'</div>'+
+          '<p class="sub" style="margin:4px 0 0">every month for '+yrs+', to end up with '+fmt(g.goal)+'</p>')
+    : '<h1>In '+yrs+' you have</h1><div class="big num">'+fmt(st.end)+'</div>';
+  const total=Math.max(st.end,0.0001);
+  const pp=Math.max(0,Math.min(100,st.paid/total*100)), pg=Math.max(0,Math.min(100-pp,st.growth/total*100));
+  const tail = st.share>=1
+    ? Math.round(st.share)+' out of every 100 at the end came from the growing, not from you.'
+    : 'Nearly all of that is money you put in yourself. Turn up how fast it grows, or how long you wait.';
+  return head+
+   '<div class="bar"><i class="b2" style="width:'+pp+'%"></i><i class="b1" style="width:'+pg+'%"></i></div>'+
+   '<div class="legend"><div><span class="dot" style="background:var(--accent);opacity:.4"></span>you put in'+
+   '<b class="num">'+fmt(st.paid)+'</b></div>'+
+   '<div><span class="dot" style="background:var(--gold)"></span>the growing added<b class="num">'+fmt(st.growth)+'</b></div>'+
+   '<div style="text-align:right">in total<b class="num">'+fmt(st.end)+'</b></div></div>'+
+   '<p class="sub" style="margin:12px 0 0">'+tail+
+   (st.double? ' At '+String(Math.round(GROW.rate*10)/10)+'% money doubles about every '+
+     Math.round(st.double)+' years.' : '')+'</p>';
+}
+function growChartSvg(st){
+  const g=GROW, n=g.years, W=700, H=250, PB=26, PT=18, base=H-PB;
+  const r1=x=>Math.round(x*10)/10, pts=[];
+  for(let y=0;y<=n;y++){
+    const m=y*12;
+    pts.push({paid:g.start+st.month*m, total:fvOf(g.start,st.month,g.rate,m)});
+  }
+  /* the goal line needs air above it, or it sits exactly on the top edge in the
+     one case that matters most — the plan that works out */
+  const top=Math.max(1, pts[n].total, g.mode==="goal"? g.goal*1.08 : 0);
+  const Y=v=>PT+(base-PT)*(1-v/top);
+  /* bars stop widening past a sensible size and the whole group centres, so a
+     one-year horizon reads as a small chart rather than a broken one */
+  const bw=Math.min(W/n,94), off=(W-bw*n)/2, w=Math.max(1,bw-Math.min(6,bw*0.2));
+  let bars="";
+  for(let y=1;y<=n;y++){
+    const d=pts[y], x=off+(y-1)*bw+(bw-w)/2, yp=Y(d.paid), yt=Y(d.total);
+    bars+='<rect x="'+r1(x)+'" y="'+r1(yp)+'" width="'+r1(w)+'" height="'+r1(Math.max(0,base-yp))+
+      '" fill="var(--accent)" opacity=".32"/>'+
+      '<rect x="'+r1(x)+'" y="'+r1(yt)+'" width="'+r1(w)+'" height="'+r1(Math.max(0,yp-yt))+
+      '" fill="var(--gold)"/>';
+  }
+  const gy=Y(g.goal);
+  const gl = g.mode==="goal" && g.goal<=top
+    ? '<line x1="0" x2="'+W+'" y1="'+r1(gy)+'" y2="'+r1(gy)+'" stroke="var(--ink)" '+
+      'stroke-width="1.5" stroke-dasharray="6 5" opacity=".5"/>'+
+      '<text x="2" y="'+r1(gy-6)+'" font-size="13" fill="var(--ink-soft)">'+esc(fmtShort(g.goal))+'</text>'
+    : "";
+  return '<svg viewBox="0 0 '+W+' '+H+'" width="100%" style="display:block" font-family="inherit" '+
+   'role="img" aria-label="What you put in, and what the growing added, year by year">'+
+   bars+gl+
+   '<line x1="0" x2="'+W+'" y1="'+base+'" y2="'+base+'" stroke="var(--line)" stroke-width="1.5"/>'+
+   '<text x="2" y="'+(H-7)+'" font-size="13" fill="var(--ink-soft)">now</text>'+
+   '<text x="'+(W-2)+'" y="'+(H-7)+'" text-anchor="end" font-size="13" fill="var(--ink-soft)">'+
+   esc(n+(n===1?" year":" years")+growAge(n))+'</text></svg>';
+}
+function vGrow(){
+  const g=GROW, st=growState();
+  const sliders=growSlider("start","Money you start with",0,500,10)+
+   (g.mode==="grow"? growSlider("month","Money you add every month",0,100,1) : "")+
+   growSlider("rate","How fast it grows",0,15,0.5)+
+   growSlider("years","For how long",1,50,1);
+  return '<div style="margin-top:14px"><button class="btn ghost small" onclick="setView(\'saving\')">'+
+   '‹ Back to saving</button></div>'+
+   '<section><div class="seg">'+
+   '<button aria-pressed="'+(g.mode==="grow")+'" onclick="growMode(\'grow\')">What does it turn into?</button>'+
+   '<button aria-pressed="'+(g.mode==="goal")+'" onclick="growMode(\'goal\')">How do I reach a goal?</button>'+
+   '</div></section>'+
+   '<div class="hero" id="growOut">'+growOutHtml(st)+'</div>'+
+   '<section><div class="card" id="growChart">'+growChartSvg(st)+'</div>'+
+   '<p class="sub" style="margin:8px 0 0"><span class="dot" style="background:var(--accent);opacity:.4"></span>'+
+   'what you put in &nbsp; <span class="dot" style="background:var(--gold)"></span>what the growing added</p></section>'+
+   (g.mode==="goal"? '<section><h2>I want to end up with…</h2><div class="grid3" id="growChips">'+
+     growChipsHtml()+'</div></section>' : '')+
+   '<section><h2>Play with it</h2><div class="card">'+sliders+'</div>'+
+   '<p class="sub" style="margin:10px 0 0">A bank account pays about 1%. The world fund has averaged '+
+   'somewhere near 7% over very long stretches. 12% would be a lucky run, not a plan.</p></section>'+
+   '<section><div class="notebox">This machine pretends the price climbs by exactly the same amount '+
+   'every single year. Real prices never do that — some years they fall. It is a picture of the idea, '+
+   'not a promise.</div>'+
+   '<div style="margin-top:12px"><button class="btn ghost" onclick="explainGrowth()">'+
+   'Why does it curve upwards?</button></div></section>';
+}
+function explainGrowth(){
+  const rows=[10,20,30,40,50].map(y=>'<tr><td>'+y+' years</td><td>'+eur(fvOf(0,10,7,y*12))+'</td></tr>').join("");
+  dlgBody.innerHTML='<h3>Why does it curve upwards?</h3>'+
+   '<p>Money that grows does not add the same amount every year. It adds a slice of whatever is '+
+   'already there. The bigger the pile, the bigger the next slice — so the pile grows faster the '+
+   'longer you leave it alone.</p>'+
+   '<h4>The first year and the twentieth</h4>'+
+   '<p>€100 growing at 7% earns €7 in its first year. By the twentieth year that €100 has become '+
+   'about €387, and 7% of that is €27. Same rate, nearly four times the money. That is the whole trick.</p>'+
+   '<h4>Doubling</h4>'+
+   '<p>Divide 72 by the rate and you get roughly how many years it takes to double. At 7%, about ten '+
+   'years. At 3%, about twenty-four. Most of the work is done by waiting.</p>'+
+   '<h4>€10 a month at 7%</h4><table>'+rows+'</table>'+
+   '<p>You put in the same €10 a month the whole way down that list. The last ten years add more than '+
+   'the first thirty put together.</p>'+
+   '<h4>One thing it does not show</h4>'+
+   '<p>Prices in shops slowly creep up too, so money far in the future buys less than the same money '+
+   'today. The growing has to beat that creep before it makes you better off. Over long stretches it '+
+   'usually has.</p>'+
+   '<div class="dlgbtns"><button class="btn ghost" onclick="explainSaving()">How saving works</button>'+
+   '<button class="btn" onclick="dlg.close()">Got it</button></div>';
+  if(!dlg.open) dlg.showModal();
 }
 
 /* ---- review ---- */
@@ -1456,6 +1677,10 @@ function explainSaving(){
    '<h4>Selling early</h4>'+
    '<p>You can sell any time and the money goes straight back into your balance. But if you sell before the '+
    'year is up, <b>the bonus is gone</b> — and the cushion goes with it. Then a price that has fallen is simply a loss.</p>'+
+   '<h4>What waiting does</h4>'+
+   '<p>The bonus is a one-off. The growing is not — it keeps going for as long as you leave the '+
+   'money alone, and it speeds up. <a href="#" onclick="dlg.close();setView(\'grow\');return false;" '+
+   'style="color:inherit">Try it out</a>.</p>'+
    '<h4>A good rule</h4>'+
    '<p>Only invest money you do not need soon. If you are saving for something you want to buy in a few weeks, '+
    'leave it in your balance where it cannot shrink.</p>'+
