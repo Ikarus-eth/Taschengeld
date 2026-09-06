@@ -167,6 +167,62 @@ The Saving screen carries a three-level swing indicator per instrument, a per-in
 explainer (why people like it / what to watch out for), and a "How saving works" dialog
 with the payoff table down to a 50% drawdown, where the match makes the child break even.
 
+## Compounding playground
+
+A separate screen (`VIEW="grow"`) reached from the **What if I wait?** button on Saving and
+from a link in the "How saving works" dialog. It is a toy: it reads nothing from the ledger,
+writes nothing, and touches no saved state. The Saving tab stays lit in the nav while it is
+open, and a "Back to saving" button sits at the top.
+
+Two modes over the same maths, solved for a different unknown:
+
+| Mode | Given | Solved for |
+|---|---|---|
+| What does it turn into? | start, monthly, rate, years | final value |
+| How do I reach a goal? | goal, start, rate, years | monthly amount |
+
+Monthly compounding with the deposit at the **end** of each month, matching how her own
+deposits land and keeping the goal solver a closed form rather than a search:
+
+```
+i = rate/100/12,  g = (1+i)^months
+FV  = P0·g + PMT·(g−1)/i
+PMT = (FV − P0·g)·i/(g−1)
+```
+
+Both degrade to plain addition at `i = 0`. `pmtFor` inverts `fvOf` to floating-point
+precision (worst relative error ~1e-16 over a 3,000-state fuzz). A goal already covered by
+the starting amount clamps the monthly to zero and says so rather than showing a negative.
+
+Sliders: start €0–500, monthly €0–100, rate 0–15% in half steps, horizon 1–50 years. The
+horizon label shows the child's age at the end, from a new per-child `born` field
+(Juna 2016, Artus 2019) — it is the line that makes fifty years mean something. Goal chips
+run €500 to €1m.
+
+Sliders repaint **in place** (`growPaint` swaps the readout, the chart and the labels)
+rather than through `render()`; re-creating the `<input>` under a finger that is still
+dragging it cancels the drag on iOS. Mode switches do go through `render()`, because they
+change which sliders exist.
+
+The chart is inline SVG, one stacked bar per year: contributions in the accent colour at
+32% opacity, growth on top in gold. The widening gold band *is* the lesson. Bars stop
+widening past a 94px slot and the group centres, so a one-year horizon reads as a small
+chart rather than a broken one. In goal mode a dashed line marks the target, with the scale
+padded 8% above it so the line does not land on the top edge in exactly the case that
+matters — the plan that works out.
+
+Honesty is load-bearing here: a note under the sliders states that the machine pretends the
+price climbs by the same amount every year and that real prices do not, and the rate hint
+anchors 1% to a bank account, ~7% to the world fund's long-run average and 12% to a lucky
+run rather than a plan. The "Why does it curve upwards?" dialog covers the slice-of-the-pile
+mechanism, the rule of 72, a €10/month table from 10 to 50 years, and a paragraph on
+inflation.
+
+`fmtShort()` handles the axis and chip labels, since `fmt()` spells out every digit and is
+unreadable at a million or in rupiah. `fmt()` and `eur()` now put thousands separators on
+the euro side as well (via `euros()`); everyday two- and three-digit balances look
+identical, but this screen runs to seven.
+
 ## Price feed
 
 Manual refresh from the parent view, plus a **background auto-refresh**: at most once every
