@@ -210,8 +210,10 @@ that is not a site failure. Use `raw.githubusercontent.com`, which is allowliste
 - **The note size is code, not a setting.** `JAR_NOTE` in `index.html` decides it and
   `migrateJarNote()` overwrites any other stored or restored value, logging the switch
   as *One note*, because the count is derived from the rupiah balance and nothing else
-  depends on it. Notes are drawn in the real banknote's colour so the iPad jar matches
-  the physical one: Rp 10,000 purple, Rp 5,000 brown. If a parent setting for the note
+  depends on it. The jar draws a photo of the real banknote so the iPad jar matches the
+  physical one (`--note-img`, a 320×153 JPEG data URI kept last in the stylesheet so it
+  never scrolls past when reading the CSS); replace the photo whenever `JAR_NOTE`
+  changes. If a parent setting for the note
   is ever added, gate the migration on a version the way `scheme` gates Artus's rules,
   or it will undo that setting on every load. `migrate()` runs both migrations, on load
   and after an import.
