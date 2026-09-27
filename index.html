@@ -24,7 +24,9 @@
   --gold:#B07D18; --gold-soft:#F6EBD2;
   --juna:#7A3E9D; --juna-soft:#EFE5F6; --artus:#1F7A5C; --artus-soft:#DFF0E8;
   --nalu:#1F5C99; --nalu-soft:#E0EBF6;
-  --note:#BE9A5E; --note-edge:#8F6D39; --glass:#F3F7FB; --glass-edge:#A9C0DA;
+  --note:#8C5CAA; --note-edge:#633D80; --glass:#F3F7FB; --glass-edge:#A9C0DA;
+  /* notes are drawn in the real banknote's colour: purple for Rp 10,000 (JAR_NOTE),
+     brown until 27 Sept 2026 while the jar counted Rp 5,000 notes */
   --warn:#A33B2A; --accent:var(--juna); --accent-soft:var(--juna-soft); --r:14px;
 }
 body.artus{--accent:var(--artus);--accent-soft:var(--artus-soft);}
@@ -198,7 +200,7 @@ input[type="range"]::-moz-range-thumb{width:26px;height:26px;border-radius:50%;b
 .bundles{display:flex;flex-wrap:wrap;gap:12px 8px;padding-bottom:6px;}
 .bundle{display:flex;align-items:center;justify-content:center;width:56px;height:28px;border-radius:4px;
   background:var(--note);border:1.5px solid var(--note-edge);color:#fff;font-weight:700;font-size:15px;
-  box-shadow:0 3px 0 #A8854B,0 6px 0 var(--note-edge);}
+  box-shadow:0 3px 0 #774C95,0 6px 0 var(--note-edge);}
 .jarcount{flex:1;min-width:0;padding-bottom:6px;}
 .jarcount .big{font-size:76px;}
 .jarunit{font-size:24px;font-weight:700;margin:-2px 0 6px;}
@@ -248,6 +250,10 @@ const DAY=86400000, KEY="challenges_v2", FEEDKEY="challenges_feed";
 const AUTO_MS=6*3600*1000, RETRY_MS=30*60*1000;
 
 const KIDS=["juna","artus","nalu"];
+/* Nalu's jar counts in notes of this size: Rp 10,000 since 27 Sept 2026, Rp 5,000
+   before. Set here, not in the app; migrateJarNote() brings a stored or restored
+   value in line and logs the switch. */
+const JAR_NOTE=10000;
 const RATES={
   juna:[2,2,2,2, 4,4,4,4, 5,5,5,5, 6,6,6,6, 8,8,8,8],
   /* Artus since 27 Sept 2026: open-ended, the last step repeats for every good
@@ -333,8 +339,8 @@ function fresh(){
         milestones:[],
         days:{}, approved:{}, books:[], words:{}, spend:[], deposits:[], payouts:[], extras:[] },
       /* No challenge, only a jar. His ledger is kept in rupiah, not euro, so a
-         Rp 20,000 week is always exactly four Rp 5,000 notes whatever the rate does. */
-      nalu:{ name:"Nalu", born:2021, jar:true, note:5000,
+         Rp 20,000 week is always exactly two Rp 10,000 notes whatever the rate does. */
+      nalu:{ name:"Nalu", born:2021, jar:true, note:JAR_NOTE,
         allowanceIdr:20000, allowanceEvery:"week", payDay:0, allowanceFrom:"2026-09-01",
         start:"2026-09-01", weeks:0, minDays:0, minutes:0,
         bonusMinutes:0, bonusDays:0, bonusEur:0, allowance:0,
@@ -801,7 +807,7 @@ function render(){
   if(jar) view.innerHTML = VIEW==="jar"? vJar(c) : vParentsJar(c);
   else view.innerHTML = VIEW==="today"?vToday(c): VIEW==="goals"?vGoals(c): VIEW==="money"?vMoney(c)
     : VIEW==="saving"?vSaving(c): VIEW==="grow"?vGrow(): vParents(c);
-  foot.innerHTML= jar? 'One note is '+idr(K().note||5000)
+  foot.innerHTML= jar? 'One note is '+idr(K().note||JAR_NOTE)
     : '€1 = '+idr(S.fx)+' · <a href="#" onclick="toggleCur();return false;" style="color:inherit">show in '+(CUR==="EUR"?"rupiah":"euro")+'</a>';
 }
 function hero(c){
@@ -1327,7 +1333,7 @@ const ACT={day:"Reading",approve:"Approval",words:"Words",spend:"Spent",extra:"E
 function logLine(e){
   const kid=K(e.k);
   if(kid&&kid.jar&&(e.a==="spend"||e.a==="extra"||e.a==="payout")){
-    const x=Number(e.idr)||0, nt=kid.note||5000;
+    const x=Number(e.idr)||0, nt=kid.note||JAR_NOTE;
     const amt= x>0&&x%nt===0? noteWord(x/nt)+" ("+idr(x)+")" : idr(x);
     if(e.a==="spend") return "Took out "+amt+" — "+esc(e.label);
     if(e.a==="extra") return "Put in "+amt+" — "+esc(e.label);
@@ -1569,15 +1575,17 @@ function payDaySettings(kid){
 }
 
 /* ---- Nalu's jar ----
-   A five-year-old counts things, not rupiah. The jar shows Rp 5,000 notes in rows
-   of five, ten to a frame, filling from the bottom, so four reads as a shape before
-   it reads as a number. Pocket money, gifts, spending and cash handed over are all
-   stored in rupiah; the euro figure on each record is informational only. */
+   A five-year-old counts things, not rupiah. The jar shows JAR_NOTE notes (Rp 10,000
+   since 27 Sept 2026, Rp 5,000 before) in rows of five, ten to a frame, filling from
+   the bottom, so a week's two read as a shape before they read as a number. Pocket
+   money, gifts, spending and cash handed over are all stored in rupiah; the euro
+   figure on each record is informational only. The note count is derived from the
+   rupiah balance on every render, so changing the note size moves no money. */
 let JARSEEN="";
 function idrOf(x){ return x.idr!==undefined&&x.idr!==null? (Number(x.idr)||0) : Math.round((Number(x.eur)||0)*(x.fx||S.fx)); }
 function noteWord(n){ return n===1? "1 note" : n+" notes"; }
 function calcJar(k){
-  const kid=K(k), t=today(), note=kid.note||5000, fx=S.fx||1;
+  const kid=K(k), t=today(), note=kid.note||JAR_NOTE, fx=S.fx||1;
   const periods=allowancePeriods(kid,t);
   const pocketIdr=periods*(Number(kid.allowanceIdr)||0);
   const sum=a=>(a||[]).reduce((s,x)=>s+idrOf(x),0);
@@ -1675,7 +1683,7 @@ function vParentsJar(c){
    '<input type="number" step="1000" inputmode="numeric" value="'+(Number(kid.allowanceIdr)||0)+'" '+
    'onchange="kid_(Math.max(0,Math.round(Number(this.value)||0)),\'allowanceIdr\',\'Pocket money per week (Rp)\')">'+
    payDaySettings(kid)+
-   '<p class="sub" style="margin:10px 0 0">One note is '+idr(kid.note||5000)+'. Amounts that are not whole notes show as change.</p>'+
+   '<p class="sub" style="margin:10px 0 0">One note is '+idr(kid.note||JAR_NOTE)+'. Amounts that are not whole notes show as change.</p>'+
    '<label>PIN</label><input type="text" value="'+esc(S.pin)+'" onchange="setPin(this.value)">'+
    '</div></section>'+backupSection();
 }
@@ -1811,6 +1819,27 @@ function migrateSchemes(){
     v:"15 min on 5 days, no bonus, no end date"+(kept.length? "; week "+kept.join(", ")+" kept as approved" : "")});
   return true;
 }
+/* The note size lives in code (JAR_NOTE), not in the app's settings, so a stored
+   or restored value that differs is replaced here and logged as a setting, which is
+   what the weekly review shows when the number of notes changes overnight. Balances
+   are rupiah, so only the count moves: Rp 80,000 was 16 notes of Rp 5,000 and is 8 of
+   Rp 10,000. If a parent setting for the note is ever added, gate this on a version
+   the way migrateSchemes() uses scheme, or it will undo that setting on every load. */
+function migrateJarNote(){
+  let changed=false;
+  for(const k of KIDS){
+    const kid=S.kids[k];
+    if(!kid || !kid.jar || Number(kid.note)===JAR_NOTE) continue;
+    const was=Number(kid.note)||0;
+    kid.note=JAR_NOTE;
+    logEvent(k,"setting",{d:iso(today()), by:"p", label:"One note",
+      p: was? idr(was) : "not set", v:idr(JAR_NOTE)});
+    changed=true;
+  }
+  return changed;
+}
+/* every one-off data change, on load and after a backup is restored */
+function migrate(){ const a=migrateSchemes(), b=migrateJarNote(); return a||b; }
 
 /* ---- actions ---- */
 function kid_(v,f,label){ const was=K()[f]; K()[f]=v;
@@ -2140,13 +2169,13 @@ function importJSON(){
       S.seq=0; for(const e of S.log){ if(!e.n) e.n=++S.seq; else if(e.n>S.seq) S.seq=e.n; }
       S.logStart=keepStart&&(!S.logStart||keepStart<S.logStart)? keepStart : (S.logStart||new Date().toISOString());
       logEvent(KID,"import",{d:iso(today()),label:"backup restored"});
-      migrateSchemes();
+      migrate();
       save(); render(); alert("Backup loaded.");
     }
     catch(e){ alert("That file could not be read."); } }; r.readAsText(i.files[0]); };
   i.click();
 }
-if(migrateSchemes()) save();
+if(migrate()) save();
 render();
 setTimeout(autoRefresh,1500);
 document.addEventListener("visibilitychange",()=>{ if(!document.hidden) setTimeout(autoRefresh,400); });
