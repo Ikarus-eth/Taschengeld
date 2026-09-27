@@ -199,14 +199,22 @@ that is not a site failure. Use `raw.githubusercontent.com`, which is allowliste
   schedule (`[{from, amount}]`) and sum over segments; until then the parent view carries a
   note saying so.
 - **Nalu's ledger is rupiah, counted in notes.** He is five and cannot read the zeros.
-  `allowanceIdr`, `note: 5000`, and `idr` on every record are authoritative; `eur` and
-  `fx` are stored for information only. A euro ledger would turn Rp 20,000 into 3.9 notes
-  the moment the rate moved. `calc()` hands jar children to `calcJar()`, which returns the
-  same field names the shared code reads (`earned: 0`, `cash` as a euro equivalent) plus
-  `balIdr`, `notes` and `rest`.
+  `allowanceIdr`, `note` (Rp 10,000 since 27 Sep 2026, Rp 5,000 before), and `idr` on
+  every record are authoritative; `eur` and `fx` are stored for information only. A euro
+  ledger would turn Rp 20,000 into 1.9 notes the moment the rate moved. `calc()` hands
+  jar children to `calcJar()`, which returns the same field names the shared code reads
+  (`earned: 0`, `cash` as a euro equivalent) plus `balIdr`, `notes` and `rest`.
 - **The jar draws quantity as a shape**: rows of five, ten to a frame, filling from the
   bottom, bundles of ten past 49. It is the one bold element in his view; the rest is the
   app's normal cards. His tab bar is Jar and Parents only.
+- **The note size is code, not a setting.** `JAR_NOTE` in `index.html` decides it and
+  `migrateJarNote()` overwrites any other stored or restored value, logging the switch
+  as *One note*, because the count is derived from the rupiah balance and nothing else
+  depends on it. Notes are drawn in the real banknote's colour so the iPad jar matches
+  the physical one: Rp 10,000 purple, Rp 5,000 brown. If a parent setting for the note
+  is ever added, gate the migration on a version the way `scheme` gates Artus's rules,
+  or it will undo that setting on every load. `migrate()` runs both migrations, on load
+  and after an import.
 - **Load and import both go through `upgrade()`.** A new child or a new per-child field
   gets its default from `fresh()` on both paths, so an old backup restores with Nalu in
   place. Before this, import assigned the parsed JSON straight to `S`.
@@ -246,7 +254,8 @@ a good week is at least 15 minutes on 5 of 7 days; €2 → €2.50 → €3 →
 3 good weeks, the top step repeating with no end date; no bonus tier, no book payments, no
 physical challenge. (Until then: 10 min/day plus a 15-minute bonus tier plus five early
 readers over 10 weeks, max €35.50.) Pocket money: Juna €20 on the 1st, Artus €2 and Nalu
-Rp 20,000 every Sunday, both counted from 1 Sep 2026. Nalu has no challenge, only the jar.
+Rp 20,000 (two Rp 10,000 notes) every Sunday, both counted from 1 Sep 2026. Nalu has no
+challenge, only the jar.
 
 The step amounts were proposed in chat and implemented when the 15-minute floor and "no
 bonus" were confirmed; they were not separately confirmed. Changing them later re-derives
