@@ -74,7 +74,7 @@ the review log as *Reading rules*.
 ### Nalu — pocket money only (born 2021)
 | Item | Payout |
 |---|---|
-| Pocket money | Rp 20,000 (four Rp 5,000 notes) every Sunday from 6 Sep 2026, unconditional |
+| Pocket money | Rp 20,000 (two Rp 10,000 notes) every Sunday from 6 Sep 2026, unconditional |
 
 No challenge. Started late September 2026 and backdated to the start of September, so the
 four September Sundays were in the jar on day one. See [Nalu's jar](#nalus-jar).
@@ -107,17 +107,23 @@ side of the app is one screen, the **Jar**, plus the parent view; the tab bar hi
 Goals, Money and Saving for him.
 
 - **The unit is a note, not a currency.** His ledger is kept in rupiah (`allowanceIdr`,
-  and `idr` on every record), with `note: 5000`. Rp 20,000 a week is always exactly four
-  notes; a euro-based ledger would drift with the exchange rate and show him 3.9 notes.
-  Each record also stores `eur` and `fx` at the day's rate, for information only.
+  and `idr` on every record), with `note: 10000` (`JAR_NOTE`). Rp 20,000 a week is always
+  exactly two notes; a euro-based ledger would drift with the exchange rate and show him
+  1.9 notes. Each record also stores `eur` and `fx` at the day's rate, for information only.
+- **The note is Rp 10,000 since 27 Sep 2026**, drawn purple like the real note. Until then
+  it was Rp 5,000, drawn brown. The size is set in code, not in the app: `migrateJarNote()`
+  replaces a different stored or restored value on load and after an import, and records
+  it in the review log as *One note*. Balances are rupiah, so the switch moved no money;
+  only the count halved (Rp 80,000 is 8 notes instead of 16). An amount left over from
+  the Rp 5,000 days that is not a whole Rp 10,000 shows as change.
 - **The jar draws the notes.** Rows of five, ten to a frame, filling from the bottom, so
-  four reads as a shape before it reads as a number. Past 49 notes, full tens collapse
-  into bundles marked 10. The count is shown large beside the jar, with the rupiah value
-  small underneath. Amounts that are not whole notes show as change.
-- **Sunday is visible.** On pay day the four new notes have a gold edge and drop in once
-  per day. Other days show "4 notes more on Sunday" with one moon per sleep.
+  a week's two read as a shape before they read as a number. Past 49 notes, full tens
+  collapse into bundles marked 10. The count is shown large beside the jar, with the
+  rupiah value small underneath. Amounts that are not whole notes show as change.
+- **Sunday is visible.** On pay day the two new notes have a gold edge and drop in once
+  per day. Other days show "2 notes more on Sunday" with one moon per sleep.
 - **In and out** lists pocket money, purchases, gifts and cash handed over as rows of
-  small notes with +4 / −2.
+  small notes with +2 / −1.
 - **Taking out and putting in** use a stepper (− / +) that draws the notes as they are
   counted, with an optional exact rupiah field. Taking out is capped at what is in the
   jar. "I bought something" and "I got money" are on the jar; "Hand over as cash" is in
