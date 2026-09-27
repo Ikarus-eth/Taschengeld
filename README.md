@@ -110,8 +110,12 @@ Goals, Money and Saving for him.
   and `idr` on every record), with `note: 10000` (`JAR_NOTE`). Rp 20,000 a week is always
   exactly two notes; a euro-based ledger would drift with the exchange rate and show him
   1.9 notes. Each record also stores `eur` and `fx` at the day's rate, for information only.
-- **The note is Rp 10,000 since 27 Sep 2026**, drawn purple like the real note. Until then
-  it was Rp 5,000, drawn brown. The size is set in code, not in the app: `migrateJarNote()`
+- **The note is Rp 10,000 since 27 Sep 2026**, drawn as a photo of the real note (reverse,
+  2022 issue): a 320×153 JPEG in a data URI (`--note-img`, last in the stylesheet), so
+  `index.html` stays self-contained. Notes in the jar, the small notes under *In and out*
+  and in the stepper, and the bundles of ten all use it, over a purple fallback colour.
+  Until then the note was Rp 5,000, drawn as a plain brown shape. The size is set in code,
+  not in the app: `migrateJarNote()`
   replaces a different stored or restored value on load and after an import, and records
   it in the review log as *One note*. Balances are rupiah, so the switch moved no money;
   only the count halved (Rp 80,000 is 8 notes instead of 16). An amount left over from
