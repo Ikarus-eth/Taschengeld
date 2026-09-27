@@ -1,7 +1,7 @@
 # Taschengeld & Challenges
 
 Single-file web app for tracking Juna's and Artus's reading challenges, pocket money,
-spending, and a virtual savings portfolio. Deployed as a static page on GitHub Pages,
+spending, and a virtual savings portfolio, plus Nalu's pocket-money jar. Deployed as a static page on GitHub Pages,
 used on an iPad from the home screen. The interface is in English.
 
 **No build step. No dependencies. No service worker.** `index.html` is the entire app;
@@ -59,19 +59,64 @@ Maximum: **€305**
 | Reading aloud, 10 min/day, ≥5 of 7 days | weeks 1–3 €1 · 4–6 €1.50 · 7–10 €2 |
 | Bonus: 15 min on ≥4 days in a week | €1 |
 | Early readers, one per fortnight | €2 each, 5 books |
-| Pocket money | €2 every Monday, unconditional |
+| Pocket money | €2 every Sunday from 6 Sep 2026, unconditional |
 
 Maximum: **€35.50**. No physical challenge in this cycle.
+
+### Nalu — pocket money only (born 2021)
+| Item | Payout |
+|---|---|
+| Pocket money | Rp 20,000 (four Rp 5,000 notes) every Sunday from 6 Sep 2026, unconditional |
+
+No challenge. Started late September 2026 and backdated to the start of September, so the
+four September Sundays were in the jar on day one. See [Nalu's jar](#nalus-jar).
 
 ## Pocket money
 
 Paid on the **first day of a period**, never pro-rated for a part period. Monthly lands on
-the 1st, starting with the first 1st that falls on or after the challenge start; weekly
-lands on Monday, same rule. Juna's challenge starts Mon 31 Aug 2026, so August pays
-nothing and her first €20 arrives on 1 Sep. Counting calendar months *touched* — the old
-behaviour — paid twice within two days.
+the 1st, starting with the first 1st that falls on or after the start; weekly lands on the
+child's pay day (`payDay`, 0 = Sunday … 6 = Saturday, Monday if unset), same rule. The start
+is `allowanceFrom` if set, otherwise the challenge start. Juna's challenge starts Mon 31 Aug
+2026, so August pays nothing and her first €20 arrives on 1 Sep. Counting calendar months
+*touched* — the old behaviour — paid twice within two days.
 
-The Money screen states the date of the next payment under the pocket money row.
+Artus and Nalu are paid on **Sunday**, counted from 1 Sep 2026 (`allowanceFrom`), so the
+first payment is Sun 6 Sep. Artus was on Mondays from 31 Aug until 27 Sep 2026; both rules
+give €8 on 27 Sep, so the switch moved nothing he could see that day. From then on a
+Sunday pays what the following Monday used to.
+
+Pocket money is **derived, not booked**: `periods × amount`, recomputed on every render.
+Changing the amount, the pay day or the start date in the parent view therefore changes
+every past period too. That is what made the September backdating a one-field change, and
+it is also why a raise should not be entered by editing the amount (see PROJECT.md).
+
+The Money screen and Nalu's jar state the date of the next payment.
+
+## Nalu's jar
+
+Nalu is five and does not read numbers yet, and rupiah amounts have too many zeros. His
+side of the app is one screen, the **Jar**, plus the parent view; the tab bar hides Today,
+Goals, Money and Saving for him.
+
+- **The unit is a note, not a currency.** His ledger is kept in rupiah (`allowanceIdr`,
+  and `idr` on every record), with `note: 5000`. Rp 20,000 a week is always exactly four
+  notes; a euro-based ledger would drift with the exchange rate and show him 3.9 notes.
+  Each record also stores `eur` and `fx` at the day's rate, for information only.
+- **The jar draws the notes.** Rows of five, ten to a frame, filling from the bottom, so
+  four reads as a shape before it reads as a number. Past 49 notes, full tens collapse
+  into bundles marked 10. The count is shown large beside the jar, with the rupiah value
+  small underneath. Amounts that are not whole notes show as change.
+- **Sunday is visible.** On pay day the four new notes have a gold edge and drop in once
+  per day. Other days show "4 notes more on Sunday" with one moon per sleep.
+- **In and out** lists pocket money, purchases, gifts and cash handed over as rows of
+  small notes with +4 / −2.
+- **Taking out and putting in** use a stepper (− / +) that draws the notes as they are
+  counted, with an optional exact rupiah field. Taking out is capped at what is in the
+  jar. "I bought something" and "I got money" are on the jar; "Hand over as cash" is in
+  the parent view, for when real notes move into a physical jar or wallet.
+- Everything goes through `logEvent` like the other children; jar entries also carry
+  `jar`, the rupiah balance after the change. The review summary and CSV export switch
+  to rupiah for him.
 
 ## Deadlines
 
@@ -260,7 +305,7 @@ automatic update shown next to it.
 
 ## Spending and extra money
 
-Pocket money and all balances are in **euro**. A purchase can be entered in **rupiah**: it
+For Juna and Artus, pocket money and all balances are in **euro** (Nalu's jar is in rupiah, see above). A purchase can be entered in **rupiah**: it
 is converted at that day's rate and the record stores `idr`, `fx` and the resulting `eur`,
 so a later rate move never rewrites past spending. The spending list shows the original
 rupiah amount and the rate used.
@@ -300,7 +345,9 @@ inflation of the numbers, not someone editing `localStorage` directly.
 
 ## Parent view
 
-PIN-gated, default `1234`, changeable in settings. Covers: settlement figure, booking
+PIN-gated, default `1234`, changeable in settings. For weekly pocket money it also sets the
+pay day and the date pocket money is counted from. Nalu's parent view shows the jar
+statement, cash handed over, his review log and his pocket-money settings. Covers: settlement figure, booking
 payouts, the review log, ticking off books and milestones, entering word counts, adding extra money, price
 refresh and manual price overrides, the auto-refresh toggle, challenge start dates, pocket
 money amounts, and JSON backup.

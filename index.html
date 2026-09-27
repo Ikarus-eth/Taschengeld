@@ -23,9 +23,12 @@
   --paper:#F3F5F0; --card:#FFFFFF; --ink:#1B2118; --ink-soft:#5C665A; --line:#D9DED6;
   --gold:#B07D18; --gold-soft:#F6EBD2;
   --juna:#7A3E9D; --juna-soft:#EFE5F6; --artus:#1F7A5C; --artus-soft:#DFF0E8;
+  --nalu:#1F5C99; --nalu-soft:#E0EBF6;
+  --note:#BE9A5E; --note-edge:#8F6D39; --glass:#F3F7FB; --glass-edge:#A9C0DA;
   --warn:#A33B2A; --accent:var(--juna); --accent-soft:var(--juna-soft); --r:14px;
 }
 body.artus{--accent:var(--artus);--accent-soft:var(--artus-soft);}
+body.nalu{--accent:var(--nalu);--accent-soft:var(--nalu-soft);}
 *{box-sizing:border-box;-webkit-tap-highlight-color:transparent;}
 html,body{margin:0;padding:0;}
 body{background:var(--paper);color:var(--ink);
@@ -125,6 +128,11 @@ nav button{flex:1;background:none;border:0;padding:11px 4px 13px;font-size:12px;
   color:var(--ink-soft);display:flex;flex-direction:column;align-items:center;gap:3px;}
 nav button[aria-selected="true"]{color:var(--accent);}
 nav .ico{font-size:21px;line-height:1;}
+/* Nalu has no challenge: his tab bar is the jar and the parent view */
+nav button[data-v="jar"]{display:none;}
+body.nalu nav button[data-v="jar"]{display:flex;}
+body.nalu nav button[data-v="today"],body.nalu nav button[data-v="goals"],
+body.nalu nav button[data-v="money"],body.nalu nav button[data-v="saving"]{display:none;}
 dialog{border:0;border-radius:18px;padding:0;max-width:460px;width:calc(100% - 28px);
   box-shadow:0 12px 44px rgba(27,33,24,.24);color:var(--ink);}
 dialog::backdrop{background:rgba(27,33,24,.42);}
@@ -169,8 +177,47 @@ input[type="range"]::-moz-range-thumb{width:26px;height:26px;border-radius:50%;b
 .logrow .logt{flex:none;width:44px;color:var(--ink-soft);font-size:13px;padding-top:2px;}
 .logrow .who{flex:none;font-size:12px;text-transform:lowercase;padding-top:3px;}
 .flag{color:var(--warn);}
+/* ---- the jar: notes fill from the bottom, five to a row, ten to a frame ---- */
+.jarhero{background:var(--card);border:1.5px solid var(--line);border-radius:var(--r);padding:18px;margin-top:14px;
+  display:flex;gap:20px;align-items:flex-end;}
+.jar{flex:none;width:58%;max-width:340px;}
+.jar .lid{height:20px;margin:0 14%;border-radius:8px 8px 4px 4px;background:var(--nalu);}
+.jar .neck{height:10px;margin:0 11%;border:2.5px solid var(--glass-edge);border-top:0;border-bottom:0;background:var(--glass);}
+.jar .glass{min-height:190px;border:2.5px solid var(--glass-edge);border-radius:26px 26px 48px 48px;
+  background:linear-gradient(90deg,#E8F0F8,var(--glass) 38%,#E8F0F8);padding:16px 14px 24px;
+  display:flex;flex-direction:column-reverse;gap:12px;}
+.jar .empty{margin:auto;color:var(--ink-soft);font-size:15px;}
+.frame{display:flex;flex-direction:column-reverse;gap:6px;}
+.frow{display:grid;grid-template-columns:repeat(5,1fr);gap:6px;}
+.note,.slot{display:block;aspect-ratio:2/1;border-radius:4px;}
+.note{background:var(--note);border:1.5px solid var(--note-edge);position:relative;}
+.note::after{content:"";position:absolute;left:36%;right:36%;top:22%;bottom:22%;
+  border:1.5px solid rgba(255,255,255,.55);border-radius:50%;}
+.note.new{box-shadow:0 0 0 2.5px var(--gold);}
+.slot{border:1.5px dashed var(--glass-edge);}
+.bundles{display:flex;flex-wrap:wrap;gap:12px 8px;padding-bottom:6px;}
+.bundle{display:flex;align-items:center;justify-content:center;width:56px;height:28px;border-radius:4px;
+  background:var(--note);border:1.5px solid var(--note-edge);color:#fff;font-weight:700;font-size:15px;
+  box-shadow:0 3px 0 #A8854B,0 6px 0 var(--note-edge);}
+.jarcount{flex:1;min-width:0;padding-bottom:6px;}
+.jarcount .big{font-size:76px;}
+.jarunit{font-size:24px;font-weight:700;margin:-2px 0 6px;}
+.payline b{display:block;font-size:19px;}
+.moons{font-size:28px;letter-spacing:3px;line-height:1.2;margin:8px 0 2px;}
+.jarbtns{display:flex;gap:10px;margin-top:14px;}
+.jarbtns .btn{flex:1;min-height:64px;font-size:19px;}
+.mnotes{display:flex;flex-wrap:wrap;gap:3px;justify-content:flex-end;max-width:42%;}
+.mnote{display:inline-block;width:22px;height:11px;border-radius:2px;background:var(--note);border:1px solid var(--note-edge);}
+.money.in{color:var(--gold);}
+.stepper{display:flex;align-items:center;gap:14px;}
+.stepper .btn{width:66px;min-height:66px;padding:0;font-size:30px;line-height:1;}
+.stepper .big{flex:1;text-align:center;}
+.jmtiles{display:flex;flex-wrap:wrap;gap:4px;min-height:14px;margin-top:10px;}
+@media (max-width:440px){ .jarhero{flex-direction:column;align-items:stretch;} .jar{width:100%;max-width:none;} }
 @media (prefers-reduced-motion:no-preference){
   .stamp,.check,.wd i,.st i{transition:background-color .18s ease,border-color .18s ease;}
+  .note.drop{animation:drop .55s cubic-bezier(.2,.9,.3,1.15) both;}
+  @keyframes drop{from{transform:translateY(-70px);opacity:0;}to{transform:none;opacity:1;}}
 }
 </style>
 </head>
@@ -178,14 +225,16 @@ input[type="range"]::-moz-range-thumb{width:26px;height:26px;border-radius:50%;b
 <div class="wrap">
   <header>
     <div class="kidtabs" role="tablist">
-      <button class="kidtab" role="tab" id="tabJuna" onclick="setKid('juna')">Juna</button>
-      <button class="kidtab" role="tab" id="tabArtus" onclick="setKid('artus')">Artus</button>
+      <button class="kidtab" role="tab" data-k="juna" onclick="setKid('juna')">Juna</button>
+      <button class="kidtab" role="tab" data-k="artus" onclick="setKid('artus')">Artus</button>
+      <button class="kidtab" role="tab" data-k="nalu" onclick="setKid('nalu')">Nalu</button>
     </div>
   </header>
   <main id="view"></main>
   <p class="foot" id="foot"></p>
 </div>
 <nav role="tablist">
+  <button role="tab" data-v="jar" onclick="setView('jar')"><span class="ico">🫙</span>Jar</button>
   <button role="tab" data-v="today" onclick="setView('today')"><span class="ico">📖</span>Today</button>
   <button role="tab" data-v="goals" onclick="setView('goals')"><span class="ico">🎯</span>Goals</button>
   <button role="tab" data-v="money" onclick="setView('money')"><span class="ico">💰</span>Money</button>
@@ -198,11 +247,13 @@ input[type="range"]::-moz-range-thumb{width:26px;height:26px;border-radius:50%;b
 const DAY=86400000, KEY="challenges_v2", FEEDKEY="challenges_feed";
 const AUTO_MS=6*3600*1000, RETRY_MS=30*60*1000;
 
+const KIDS=["juna","artus","nalu"];
 const RATES={
   juna:[2,2,2,2, 4,4,4,4, 5,5,5,5, 6,6,6,6, 8,8,8,8],
-  artus:[1,1,1, 1.5,1.5,1.5, 2,2,2,2]
+  artus:[1,1,1, 1.5,1.5,1.5, 2,2,2,2],
+  nalu:[]
 };
-const BOOKS={juna:[4,7,10,14], artus:[2,2,2,2,2]};
+const BOOKS={juna:[4,7,10,14], artus:[2,2,2,2,2], nalu:[]};
 const COMPANIES=["Alphabet","Microsoft","SpaceX","NVIDIA","Apple","Amazon","TSMC","Meta","Tesla"];
 const TICKER={Alphabet:"GOOGL",Microsoft:"MSFT",SpaceX:"SPCX",NVIDIA:"NVDA",Apple:"AAPL",
   Amazon:"AMZN",TSMC:"TSM",Meta:"META",Tesla:"TSLA"};
@@ -275,9 +326,17 @@ function fresh(){
         days:{}, books:[], words:{}, spend:[], deposits:[], payouts:[], extras:[] },
       artus:{ name:"Artus", born:2019, start:"2026-08-31", weeks:10, minDays:5, minutes:10,
         bonusMinutes:15, bonusDays:4, bonusEur:1,
-        allowance:2, allowanceEvery:"week",
+        allowance:2, allowanceEvery:"week", payDay:0, allowanceFrom:"2026-09-01",
         bookMin:"An early reader, one every two weeks", wordRate:0, wordCap:0,
         milestones:[],
+        days:{}, books:[], words:{}, spend:[], deposits:[], payouts:[], extras:[] },
+      /* No challenge, only a jar. His ledger is kept in rupiah, not euro, so a
+         Rp 20,000 week is always exactly four Rp 5,000 notes whatever the rate does. */
+      nalu:{ name:"Nalu", born:2021, jar:true, note:5000,
+        allowanceIdr:20000, allowanceEvery:"week", payDay:0, allowanceFrom:"2026-09-01",
+        start:"2026-09-01", weeks:0, minDays:0, minutes:0,
+        bonusMinutes:0, bonusDays:0, bonusEur:0, allowance:0,
+        bookMin:"", wordRate:0, wordCap:0, milestones:[],
         days:{}, books:[], words:{}, spend:[], deposits:[], payouts:[], extras:[] }
     }
   };
@@ -298,7 +357,15 @@ function load(){
   try{
     const raw=localStorage.getItem(KEY)||localStorage.getItem("challenges_v1");
     if(!raw){ const o=fresh(); o.feed.sheet=localStorage.getItem(FEEDKEY)||""; o.logStart=new Date().toISOString(); return o; }
-    const p=JSON.parse(raw), f=fresh(), out=Object.assign({},f,p);
+    return upgrade(JSON.parse(raw));
+  }catch(e){ return fresh(); }
+}
+/* Stored state and restored backups both come through here, so a backup made
+   before a child or a field existed still loads with that child and field in place.
+   New per-child fields take their default from fresh(), which is how Artus moved
+   to Sunday pocket money counted from 1 Sep without touching anything he logged. */
+function upgrade(p){
+    const f=fresh(), out=Object.assign({},f,p);
     out.feed=Object.assign({},f.feed,p.feed||{});
     /* the sheet link also lives in its own key, so a partial import or a bad
        merge can never silently unlink the price feed */
@@ -312,7 +379,7 @@ function load(){
       if(v&&typeof v==="object"&&v.px!==undefined) out.prices.basket[c]=Object.assign({},f.prices.basket[c],v);
     }
     out.kids={};
-    for(const k of ["juna","artus"]){
+    for(const k of KIDS){
       const kid=Object.assign({},f.kids[k],(p.kids||{})[k]||{});
       const d={};
       for(const key in (kid.days||{})){ const val=kid.days[key]; d[key]= val===true? kid.minutes : Number(val)||0; }
@@ -342,7 +409,6 @@ function load(){
     for(const e of out.log){ if(!e.n) e.n=++out.seq; else if(e.n>out.seq) out.seq=e.n; }
     out.v=3;
     return out;
-  }catch(e){ return fresh(); }
 }
 function save(){
   try{
@@ -364,7 +430,7 @@ function logEvent(k,a,info){
     const c=calc(k);
     S.log.push(Object.assign({n:++S.seq, t:new Date().toISOString(), k:k, a:a,
       by:(VIEW==="parents"?"p":"k"), earned:Math.round(c.earned*100)/100,
-      cash:Math.round(c.cash*100)/100}, info||{}));
+      cash:Math.round(c.cash*100)/100}, c.jar? {jar:c.balIdr} : {}, info||{}));
     if(S.log.length>LOGCAP) S.log.splice(0,S.log.length-LOGCAP);
   }catch(e){ /* logging must never block the action it is recording */ }
 }
@@ -376,6 +442,7 @@ const WD=["Mon","Tue","Wed","Thu","Fri","Sat","Sun"];
 const K=k=>S.kids[k||KID];
 function weekIndex(k,d){ return Math.round((monday(d)-monday(new Date(K(k).start+"T12:00:00")))/(7*DAY)); }
 function dshort(d){ const x=new Date(d+"T12:00:00"); return x.toLocaleDateString("en-GB",{day:"numeric",month:"short"}); }
+function dday(d){ const x=new Date(d+"T12:00:00"); return x.toLocaleDateString("en-GB",{weekday:"short",day:"numeric",month:"short"}); }
 function esc(s){ return String(s==null?"":s).replace(/&/g,"&amp;").replace(/</g,"&lt;").replace(/>/g,"&gt;").replace(/"/g,"&quot;"); }
 /* A quoted JS string for use inside a double-quoted HTML attribute: the JS
    string is delimited with single quotes and anything that could close the
@@ -594,31 +661,36 @@ function wordEditable(k,i){
 }
 /* Pocket money lands on the first day of a period and is never paid for a part
    period. Monthly: the 1st of the month, starting with the first 1st that falls
-   on or after the challenge start. Weekly: Monday, same rule. A challenge that
-   starts on 31 Aug therefore pays nothing for August and its first amount on
-   1 Sep — counting calendar months touched would pay twice in two days. */
+   on or after the start. Weekly: the child's pay day (payDay, 0 = Sunday … 6 =
+   Saturday, Monday if unset), starting with the first such day on or after the
+   start. The start is allowanceFrom if set, otherwise the challenge start. A
+   challenge that starts on 31 Aug therefore pays nothing for August and its first
+   monthly amount on 1 Sep — counting calendar months touched would pay twice in
+   two days. Everything here is derived, so changing the amount, the day or the
+   start re-derives every past period too. */
+const DAYNAME=["Sunday","Monday","Tuesday","Wednesday","Thursday","Friday","Saturday"];
+function payDayOf(kid){ const d=Number(kid.payDay); return kid.payDay===undefined||kid.payDay===null||isNaN(d)? 1 : ((d%7)+7)%7; }
+function allowanceStart(kid){ return new Date((kid.allowanceFrom||kid.start)+"T12:00:00"); }
 function firstPayday(kid){
-  const st=new Date(kid.start+"T12:00:00");
-  if(kid.allowanceEvery==="week"){
-    const m=monday(st);
-    return m<st? addD(m,7) : m;
-  }
+  const st=allowanceStart(kid);
+  if(kid.allowanceEvery==="week") return addD(st,(payDayOf(kid)-st.getDay()+7)%7);
   const d=st.getDate()>1? 1:0;
   return new Date(st.getFullYear(), st.getMonth()+d, 1, 12,0,0,0);
 }
 function allowancePeriods(kid,t){
   const fp=firstPayday(kid);
   if(t<fp) return 0;
-  if(kid.allowanceEvery==="week") return Math.round((monday(t)-fp)/(7*DAY))+1;
+  if(kid.allowanceEvery==="week") return Math.floor(Math.round((t-fp)/DAY)/7)+1;
   return (t.getFullYear()-fp.getFullYear())*12+(t.getMonth()-fp.getMonth())+1;
 }
 function nextPayday(kid,t){
   const fp=firstPayday(kid);
   if(t<fp) return fp;
-  return kid.allowanceEvery==="week"? addD(monday(t),7)
+  return kid.allowanceEvery==="week"? addD(fp,allowancePeriods(kid,t)*7)
     : new Date(t.getFullYear(), t.getMonth()+1, 1, 12,0,0,0);
 }
 function calc(k){
+  if(K(k).jar) return calcJar(k);
   const kid=K(k), ws=weekStats(k);
   const weekEur=ws.weeks.reduce((s,w)=>s+w.rate,0);
   const bonusEur=ws.weeks.reduce((s,w)=>s+(w.bonus?kid.bonusEur:0),0);
@@ -699,15 +771,19 @@ function setKid(k){ KID=k; render(); }
 function setView(v){ if(v==="grow"||VIEW==="grow") window.scrollTo(0,0); VIEW=v; render(); }
 function toggleCur(){ CUR=CUR==="EUR"?"IDR":"EUR"; render(); }
 function render(){
+  const jar=!!K().jar;
+  if(jar && VIEW!=="jar" && VIEW!=="parents") VIEW="jar";
+  if(!jar && VIEW==="jar") VIEW="today";
   document.body.className=KID;
-  tabJuna.setAttribute("aria-selected",KID==="juna");
-  tabArtus.setAttribute("aria-selected",KID==="artus");
+  document.querySelectorAll(".kidtab").forEach(b=>b.setAttribute("aria-selected",b.dataset.k===KID));
   document.querySelectorAll("nav button").forEach(b=>b.setAttribute("aria-selected",
     b.dataset.v===VIEW || (VIEW==="grow" && b.dataset.v==="saving")));
   const c=calc(KID);
-  view.innerHTML = VIEW==="today"?vToday(c): VIEW==="goals"?vGoals(c): VIEW==="money"?vMoney(c)
+  if(jar) view.innerHTML = VIEW==="jar"? vJar(c) : vParentsJar(c);
+  else view.innerHTML = VIEW==="today"?vToday(c): VIEW==="goals"?vGoals(c): VIEW==="money"?vMoney(c)
     : VIEW==="saving"?vSaving(c): VIEW==="grow"?vGrow(): vParents(c);
-  foot.innerHTML='€1 = '+idr(S.fx)+' · <a href="#" onclick="toggleCur();return false;" style="color:inherit">show in '+(CUR==="EUR"?"rupiah":"euro")+'</a>';
+  foot.innerHTML= jar? 'One note is '+idr(K().note||5000)
+    : '€1 = '+idr(S.fx)+' · <a href="#" onclick="toggleCur();return false;" style="color:inherit">show in '+(CUR==="EUR"?"rupiah":"euro")+'</a>';
 }
 function hero(c){
   const max=c.earned+c.open, pe=max?c.earned/max*100:0, po=max?c.open/max*100:0;
@@ -915,7 +991,7 @@ function vMoney(c){
    '<tr><td>Books</td><td>'+fmt(c.bookEur)+'</td></tr>'+
    (kid.wordRate?'<tr><td>New words</td><td>'+fmt(c.wordEur)+'</td></tr>':'')+
    (kid.milestones.length?'<tr><td>Sport goals</td><td>'+fmt(c.msEur)+'</td></tr>':'')+
-   '<tr><td>Pocket money<div class="sub">next '+fmt(kid.allowance)+' on '+dshort(iso(nextPayday(kid,today())))+'</div></td><td>'+fmt(c.allowance)+'</td></tr>'+
+   '<tr><td>Pocket money<div class="sub">next '+fmt(kid.allowance)+' on '+dday(iso(nextPayday(kid,today())))+'</div></td><td>'+fmt(c.allowance)+'</td></tr>'+
    (c.extraEur?'<tr><td>Gifts and extras</td><td>'+fmt(c.extraEur)+'</td></tr>':'')+
    '<tr class="total"><td>Money in total</td><td>'+fmt(income)+'</td></tr>'+
    '</table></div></section>'+rest+
@@ -1227,6 +1303,13 @@ const ACT={day:"Reading",words:"Words",spend:"Spent",extra:"Extra money",payout:
   book:"Book",goal:"Sport goal",buy:"Invested",sell:"Sold",setting:"Setting",import:"Backup"};
 function logLine(e){
   const kid=K(e.k);
+  if(kid&&kid.jar&&(e.a==="spend"||e.a==="extra"||e.a==="payout")){
+    const x=Number(e.idr)||0, nt=kid.note||5000;
+    const amt= x>0&&x%nt===0? noteWord(x/nt)+" ("+idr(x)+")" : idr(x);
+    if(e.a==="spend") return "Took out "+amt+" — "+esc(e.label);
+    if(e.a==="extra") return "Put in "+amt+" — "+esc(e.label);
+    return "Handed over "+amt+" as cash"+(e.label?" — "+esc(e.label):"");
+  }
   switch(e.a){
     case "day": return e.v>0? "Logged "+e.v+" min for "+dshort(e.d) : "Cleared "+dshort(e.d);
     case "words": return (e.v>0? "Marked "+e.v+" words" : "Cleared the words")+
@@ -1250,6 +1333,7 @@ function hhmm(t){ return new Date(t).toLocaleTimeString("en-GB",{hour:"2-digit",
 function dfull(t){ return new Date(t).toLocaleDateString("en-GB",{weekday:"short",day:"numeric",month:"short"}); }
 
 function reviewSummary(list,k,b){
+  if(K(k).jar) return reviewSummaryJar(list,k,b);
   const days=list.filter(e=>e.a==="day"&&e.v>0), cleared=list.filter(e=>e.a==="day"&&e.v===0);
   const late=days.filter(e=>lateBy(e)>=2).length;
   const words=list.filter(e=>e.a==="words"&&e.v>0).length;
@@ -1275,6 +1359,23 @@ function reviewSummary(list,k,b){
     ["Settings touched", String(sets)],
     ["Earned", (base!==null? eur(base)+" → ":"")+eur(now)+
       (base!==null&&now-base? "  ("+(now-base>=0?"+":"−")+eur(Math.abs(now-base)).replace("−","")+")":"")]
+  ];
+  return '<table>'+rows.map(r=>'<tr><td>'+r[0]+'</td><td>'+r[1]+'</td></tr>').join("")+'</table>';
+}
+function reviewSummaryJar(list,k,b){
+  const sumIdr=a=>list.filter(e=>e.a===a).reduce((s,e)=>s+(Number(e.idr)||0),0);
+  const sets=list.filter(e=>e.a==="setting"||e.a==="import").length;
+  const now=calcJar(k).balIdr;
+  const before=(S.log||[]).filter(e=>e.k===k&&!inBound(e,b)).slice(-1)[0];
+  const base=before&&before.jar!==undefined? before.jar : null;
+  const batch=batchSet(list), needs=list.filter(e=>logFlags(e,batch).length).length;
+  const rows=[
+    ["Needs a look", needs? String(needs)+(needs===1?" entry":" entries") : "nothing"],
+    ["Put in by hand", sumIdr("extra")? idr(sumIdr("extra")) : "—"],
+    ["Taken out", sumIdr("spend")? idr(sumIdr("spend")) : "—"],
+    ["Handed over as cash", sumIdr("payout")? idr(sumIdr("payout")) : "—"],
+    ["Settings touched", String(sets)],
+    ["In the jar", (base!==null? idr(base)+" → ":"")+idr(now)]
   ];
   return '<table>'+rows.map(r=>'<tr><td>'+r[0]+'</td><td>'+r[1]+'</td></tr>').join("")+'</table>';
 }
@@ -1318,8 +1419,16 @@ function markReviewed(){
   save(); render();
 }
 function exportLog(){
-  const rows=[["when","who","what","refers to","detail","euro","earned after","cash after"]];
+  const jar=!!K().jar;
+  const rows=[jar? ["when","who","what","refers to","detail","rupiah","jar after (Rp)"]
+    : ["when","who","what","refers to","detail","euro","earned after","cash after"]];
   for(const e of (S.log||[]).filter(x=>x.k===KID).sort((a,b)=> a.t<b.t?-1:1)){
+    if(jar){
+      rows.push([logDayOf(e)+" "+hhmm(e.t), e.by==="p"?"parent":K(e.k).name, ACT[e.a]||e.a, e.d||"",
+        logLine(e).replace(/<[^>]+>/g,"").replace(/"/g,"'"),
+        e.idr? String((e.eur<0?-1:1)*e.idr) : "", e.jar!==undefined? String(e.jar) : ""]);
+      continue;
+    }
     rows.push([logDayOf(e)+" "+hhmm(e.t), e.by==="p"?"parent":K(e.k).name, ACT[e.a]||e.a, e.d||"",
       logLine(e).replace(/<[^>]+>/g,"").replace(/"/g,"'"),
       e.eur!==undefined&&e.eur!==null? String(Math.round(e.eur*100)/100):"",
@@ -1384,6 +1493,7 @@ function vParents(c){
    '<label>Challenge start</label><input type="date" value="'+kid.start+'" onchange="kid_(this.value,\'start\')">'+
    '<label>Pocket money per '+(kid.allowanceEvery==="week"?"week":"month")+' (€)</label>'+
    '<input type="number" step="0.5" value="'+kid.allowance+'" onchange="kid_(Number(this.value)||0,\'allowance\')">'+
+   (kid.allowanceEvery==="week"? payDaySettings(kid) : '')+
    '<label>Minutes per day</label><input type="number" value="'+kid.minutes+'" onchange="kid_(Number(this.value)||10,\'minutes\')">'+
    (kid.milestones.length? '<label>Sport goals deadline (blank = end of the challenge)</label>'+
      '<input type="date" value="'+esc(msSharedDue(KID)||"")+'" onchange="setMsDue(this.value)">' : '')+
@@ -1393,16 +1503,194 @@ function vParents(c){
      '<input type="number" value="'+kid.bonusDays+'" onchange="kid_(Number(this.value)||0,\'bonusDays\')">'+
      '<input type="number" step="0.5" value="'+kid.bonusEur+'" onchange="kid_(Number(this.value)||0,\'bonusEur\')"></div>':'')+
    '<label>PIN</label><input type="text" value="'+esc(S.pin)+'" onchange="setPin(this.value)">'+
-   '</div></section>'+
-   '<section><h2>Backup</h2><div class="card"><div style="display:flex;gap:8px;flex-wrap:wrap">'+
+   '</div></section>'+backupSection();
+}
+function backupSection(){
+  return '<section><h2>Backup</h2><div class="card"><div style="display:flex;gap:8px;flex-wrap:wrap">'+
    '<button class="btn small ghost" onclick="exportJSON()">Save data</button>'+
    '<button class="btn small ghost" onclick="importJSON()">Load a backup</button></div>'+
    '<p class="sub" style="margin:12px 0 0">Everything lives on this iPad only. Back up after every payout.</p></div></section>';
 }
+function payDaySettings(kid){
+  const opts=[1,2,3,4,5,6,0].map(d=>'<option value="'+d+'"'+(payDayOf(kid)===d?" selected":"")+'>'+DAYNAME[d]+'</option>').join("");
+  return '<label>Pocket money day</label><select onchange="kid_(Number(this.value),\'payDay\',\'Pocket money day\')">'+opts+'</select>'+
+   '<label>Pocket money counted from</label><input type="date" value="'+esc(kid.allowanceFrom||kid.start)+'" '+
+   'onchange="if(this.value)kid_(this.value,\'allowanceFrom\',\'Pocket money counted from\')">'+
+   '<div class="notebox">Pocket money is worked out from the amount, the day and this date every time the '+
+   'app opens, so changing any of them also changes the weeks that have already passed.</div>';
+}
+
+/* ---- Nalu's jar ----
+   A five-year-old counts things, not rupiah. The jar shows Rp 5,000 notes in rows
+   of five, ten to a frame, filling from the bottom, so four reads as a shape before
+   it reads as a number. Pocket money, gifts, spending and cash handed over are all
+   stored in rupiah; the euro figure on each record is informational only. */
+let JARSEEN="";
+function idrOf(x){ return x.idr!==undefined&&x.idr!==null? (Number(x.idr)||0) : Math.round((Number(x.eur)||0)*(x.fx||S.fx)); }
+function noteWord(n){ return n===1? "1 note" : n+" notes"; }
+function calcJar(k){
+  const kid=K(k), t=today(), note=kid.note||5000, fx=S.fx||1;
+  const periods=allowancePeriods(kid,t);
+  const pocketIdr=periods*(Number(kid.allowanceIdr)||0);
+  const sum=a=>(a||[]).reduce((s,x)=>s+idrOf(x),0);
+  const extraIdr=sum(kid.extras), spentIdr=sum(kid.spend), paidIdr=sum(kid.payouts);
+  const bal=pocketIdr+extraIdr-spentIdr-paidIdr;
+  const notes=bal>0? Math.floor(bal/note) : 0, rest=bal>0? bal-notes*note : 0;
+  return {jar:true, periods, pocketIdr, extraIdr, spentIdr, paidIdr, balIdr:bal, notes, rest, note,
+    earned:0, open:0, cash:bal/fx, allowance:pocketIdr/fx, extraEur:extraIdr/fx, spent:spentIdr/fx,
+    paidOut:paidIdr/fx, inv:invested(k), ws:{weeks:[],qualified:0,nowWi:0}};
+}
+function miniNotes(n){
+  return '<i class="mnote"></i>'.repeat(Math.min(n,20))+(n>20? '<span class="sub"> +'+(n-20)+'</span>' : '');
+}
+function jarGlass(n,glow,anim){
+  const tens=Math.floor(n/10), ones=n%10;
+  const cell=(i,on)=>{
+    if(!on) return '<i class="slot"></i>';
+    const g=i>=n-glow;
+    return '<i class="note'+(g?' new':'')+(g&&anim?' drop':'')+'"'+
+      (g&&anim?' style="animation-delay:'+((i-(n-glow))*140+150)+'ms"':'')+'></i>';
+  };
+  const frame=(base,filled)=>{
+    let a="",b="";
+    for(let j=0;j<5;j++) a+=cell(base+j,j<filled);
+    for(let j=5;j<10;j++) b+=cell(base+j,j<filled);
+    return '<div class="frame"><div class="frow">'+a+'</div><div class="frow">'+b+'</div></div>';
+  };
+  let out="";
+  if(!n) return '<div class="empty">empty</div>';
+  if(tens>4) out+='<div class="bundles">'+'<span class="bundle">10</span>'.repeat(tens)+'</div>';
+  else for(let i=0;i<tens;i++) out+=frame(i*10,10);
+  if(ones) out+=frame(tens*10,ones);
+  return out;
+}
+function jarHistory(c){
+  const kid=K(), fp=firstPayday(kid), ev=[];
+  for(let i=c.periods;i>=1&&i>c.periods-10;i--)
+    ev.push({date:iso(addD(fp,(i-1)*7)),label:"Pocket money",idr:Number(kid.allowanceIdr)||0,sign:1,pm:1});
+  for(const x of kid.spend) ev.push({date:x.date,label:x.label||"Bought something",idr:idrOf(x),sign:-1});
+  for(const x of (kid.extras||[])) ev.push({date:x.date,label:x.label||"Got money",idr:idrOf(x),sign:1});
+  for(const x of kid.payouts) ev.push({date:x.date,label:x.note||"Taken out as cash",idr:idrOf(x),sign:-1});
+  ev.sort((a,b)=> a.date<b.date?1:a.date>b.date?-1:(a.pm||0)-(b.pm||0));
+  const rows=ev.slice(0,12).filter(x=>x.idr>0).map(x=>{
+    const whole=x.idr%c.note===0, n=x.idr/c.note;
+    return '<div class="row"><div class="grow"><div>'+esc(x.label)+'</div><div class="sub">'+dday(x.date)+'</div></div>'+
+      (whole?'<div class="mnotes">'+miniNotes(n)+'</div>':'')+
+      '<div class="money'+(x.sign>0?' in':'')+'">'+(x.sign>0?"+":"−")+(whole? n : " "+idr(x.idr))+'</div></div>';
+  }).join("");
+  return rows || '<p class="sub" style="margin:0">Nothing yet. The first notes come on '+DAYNAME[payDayOf(kid)]+'.</p>';
+}
+function vJar(c){
+  const kid=K(), t=today(), per=Math.floor((Number(kid.allowanceIdr)||0)/c.note);
+  const last=c.periods? addD(firstPayday(kid),(c.periods-1)*7) : null;
+  const payToday=!!last && iso(last)===iso(t) && per>0;
+  const glow=payToday? Math.min(per,c.notes) : 0;
+  const anim=payToday && JARSEEN!==iso(t);
+  JARSEEN=iso(t);
+  const nx=nextPayday(kid,t), sleeps=daysUntil(nx);
+  const when= per<=0? '' : payToday
+    ? '<b>'+noteWord(per)+' came in today.</b><div class="sub">They are the ones with the gold edge.</div>'
+    : '<b>'+noteWord(per)+' more on '+DAYNAME[nx.getDay()]+'</b>'+
+      '<div class="moons" aria-hidden="true">'+"🌙".repeat(Math.max(0,Math.min(sleeps,14)))+'</div>'+
+      '<div class="sub">'+(sleeps===1? "1 sleep" : sleeps+" sleeps")+'</div>';
+  return '<div class="jarhero">'+
+    '<div class="jar" role="img" aria-label="'+noteWord(c.notes)+' in the jar">'+
+      '<div class="lid"></div><div class="neck"></div><div class="glass">'+jarGlass(c.notes,glow,anim)+'</div></div>'+
+    '<div class="jarcount"><div class="big num">'+c.notes+'</div>'+
+      '<div class="jarunit">'+(c.notes===1?"note":"notes")+'</div>'+
+      '<div class="sub num">'+idr(Math.max(0,c.balIdr))+'</div>'+
+      (c.rest? '<div class="sub num">'+idr(c.rest)+' of that is change</div>' : '')+
+    '</div></div>'+
+    (when? '<section><div class="card payline">'+when+'</div></section>' : '')+
+    '<div class="jarbtns">'+
+      '<button class="btn" onclick="jarMove(\'spend\')"'+(c.balIdr>0?'':' disabled')+'>I bought something</button>'+
+      '<button class="btn ghost" onclick="jarMove(\'extra\')">I got money</button></div>'+
+    '<section><h2>In and out</h2><div class="card">'+jarHistory(c)+'</div></section>';
+}
+function vParentsJar(c){
+  const kid=K();
+  return '<section><h2>'+esc(kid.name)+'\u2019s jar</h2><div class="card"><table>'+
+   '<tr><td>Pocket money so far<div class="sub">'+c.periods+' × '+idr(kid.allowanceIdr||0)+'</div></td><td>'+idr(c.pocketIdr)+'</td></tr>'+
+   (c.extraIdr?'<tr><td>Gifts and extras</td><td>+ '+idr(c.extraIdr)+'</td></tr>':'')+
+   (c.spentIdr?'<tr><td>Spent</td><td>− '+idr(c.spentIdr)+'</td></tr>':'')+
+   (c.paidIdr?'<tr><td>Handed over as cash</td><td>− '+idr(c.paidIdr)+'</td></tr>':'')+
+   '<tr class="total"><td>In the jar<div class="sub">'+noteWord(c.notes)+(c.rest?' and '+idr(c.rest):'')+'</div></td>'+
+   '<td>'+idr(c.balIdr)+'</td></tr></table>'+
+   '<div style="margin-top:14px;display:flex;gap:8px;flex-wrap:wrap">'+
+   '<button class="btn small" onclick="jarMove(\'payout\')"'+(c.balIdr>0?'':' disabled')+'>Hand over as cash</button>'+
+   '<button class="btn small ghost" onclick="jarMove(\'spend\')"'+(c.balIdr>0?'':' disabled')+'>Take notes out</button>'+
+   '<button class="btn small ghost" onclick="jarMove(\'extra\')">Put notes in</button></div>'+
+   '<p class="sub" style="margin:12px 0 0">Next '+idr(kid.allowanceIdr||0)+' on '+dday(iso(nextPayday(kid,today())))+'.</p>'+
+   '</div></section>'+vReview()+
+   '<section><h2>Settings for '+esc(kid.name)+'</h2><div class="card">'+
+   '<label>Pocket money per week (Rp)</label>'+
+   '<input type="number" step="1000" inputmode="numeric" value="'+(Number(kid.allowanceIdr)||0)+'" '+
+   'onchange="kid_(Math.max(0,Math.round(Number(this.value)||0)),\'allowanceIdr\',\'Pocket money per week (Rp)\')">'+
+   payDaySettings(kid)+
+   '<p class="sub" style="margin:10px 0 0">One note is '+idr(kid.note||5000)+'. Amounts that are not whole notes show as change.</p>'+
+   '<label>PIN</label><input type="text" value="'+esc(S.pin)+'" onchange="setPin(this.value)">'+
+   '</div></section>'+backupSection();
+}
+/* Taking notes out or putting them in: a stepper, so he can count along as the
+   notes appear, and a rupiah field for amounts that are not whole notes. */
+let JM={kind:"spend",n:1,max:0};
+const JMTXT={
+  spend:{t:"I bought something",lab:"What did you buy?",def:"",ok:"Take out",fallback:"Bought something"},
+  extra:{t:"I got money",lab:"Who gave it to you?",def:"Gift",ok:"Put in",fallback:"Gift"},
+  payout:{t:"Hand over as cash",lab:"Note",def:"Cash for the wallet",ok:"Hand over",fallback:"Cash"}
+};
+function jarMove(kind){
+  const c=calcJar(KID), T=JMTXT[kind];
+  if(!T) return;
+  if(kind!=="extra" && c.balIdr<=0){ alert("The jar is empty."); return; }
+  JM={kind:kind, max: kind==="extra"? 99 : c.notes, n:0};
+  JM.n=Math.min(1,JM.max);
+  dlgBody.innerHTML='<h3>'+T.t+'</h3>'+
+    '<label>'+T.lab+'</label><input id="jm_label" type="text" value="'+esc(T.def)+'">'+
+    '<label>How many notes?</label>'+
+    '<div class="stepper"><button class="btn ghost" onclick="jmStep(-1)" aria-label="one note fewer">−</button>'+
+    '<div id="jm_n" class="big num">'+JM.n+'</div>'+
+    '<button class="btn ghost" onclick="jmStep(1)" aria-label="one note more">+</button></div>'+
+    '<div id="jm_tiles" class="jmtiles">'+miniNotes(JM.n)+'</div>'+
+    '<label>Or an exact amount in rupiah</label>'+
+    '<input id="jm_rp" type="number" inputmode="numeric" placeholder="only if it is not whole notes">'+
+    (kind!=="extra"? '<p class="sub">In the jar: '+noteWord(c.notes)+(c.rest?' and '+idr(c.rest):'')+'.</p>' : '')+
+    '<div class="dlgbtns"><button class="btn ghost" onclick="dlg.close()">Cancel</button>'+
+    '<button class="btn" onclick="jmSave()">'+T.ok+'</button></div>';
+  dlg.showModal();
+}
+function jmStep(d){
+  JM.n=Math.max(0,Math.min(JM.max,JM.n+d));
+  const n=document.getElementById("jm_n"), t=document.getElementById("jm_tiles");
+  if(n) n.textContent=JM.n;
+  if(t) t.innerHTML=miniNotes(JM.n);
+}
+function jmSave(){
+  const kid=K(), c=calcJar(KID), T=JMTXT[JM.kind];
+  const rp=Math.round(Number(String((document.getElementById("jm_rp")||{}).value||"").replace(/[^0-9]/g,""))||0);
+  const amt= rp>0? rp : JM.n*c.note;
+  if(amt<=0){ alert("Choose how many notes."); return; }
+  if(JM.kind!=="extra" && amt>c.balIdr){ alert("There is only "+idr(Math.max(0,c.balIdr))+" in the jar."); return; }
+  const label=String((document.getElementById("jm_label")||{}).value||"").trim()||T.fallback;
+  const fx=S.fx||1, eurv=Math.round(amt/fx*100)/100, d=iso(today());
+  if(JM.kind==="spend"){
+    kid.spend.push({date:d,label:label,idr:amt,eur:eurv,fx:fx});
+    logEvent(KID,"spend",{d:d,eur:-eurv,label:label,idr:amt,fx:fx});
+  } else if(JM.kind==="extra"){
+    if(!Array.isArray(kid.extras)) kid.extras=[];
+    kid.extras.push({date:d,label:label,idr:amt,eur:eurv,fx:fx});
+    logEvent(KID,"extra",{d:d,eur:eurv,label:label,idr:amt,fx:fx});
+  } else {
+    kid.payouts.push({date:d,note:label,idr:amt,eur:eurv,fx:fx});
+    logEvent(KID,"payout",{d:d,eur:-eurv,label:label,idr:amt,fx:fx});
+  }
+  dlg.close(); save(); render();
+}
 
 /* ---- actions ---- */
-function kid_(v,f){ const was=K()[f]; K()[f]=v;
-  if(was!==v) logEvent(KID,"setting",{d:iso(today()),label:f,v:String(v),p:String(was)});
+function kid_(v,f,label){ const was=K()[f]; K()[f]=v;
+  const show=x=> f==="payDay"? (DAYNAME[x]||String(x)) : String(x);
+  if(was!==v) logEvent(KID,"setting",{d:iso(today()),label:label||f,v:show(v),p:show(was)});
   save(); render(); }
 function setMsDue(v){
   const kid=K(), was=msSharedDue(KID)||"";
@@ -1696,10 +1984,10 @@ function importJSON(){
   i.onchange=()=>{ const r=new FileReader(); r.onload=()=>{
     try{
       const keep=S.feed.sheet, keepLog=S.log||[], keepStart=S.logStart, keepRev=S.review||{};
-      S=JSON.parse(r.result);
+      S=upgrade(JSON.parse(r.result));
       if(!S.feed) S.feed={sheet:"",updated:null,tried:null,log:"",auto:true};
       if(!S.feed.sheet && keep) S.feed.sheet=keep;
-      for(const k of ["juna","artus"]) if(S.kids&&S.kids[k]&&!Array.isArray(S.kids[k].extras)) S.kids[k].extras=[];
+      for(const k of KIDS) if(S.kids&&S.kids[k]&&!Array.isArray(S.kids[k].extras)) S.kids[k].extras=[];
       /* union of both logs, deduped: restoring a backup must not erase what this
          device already recorded, or a restore becomes a way to clear the trail */
       const seen=new Set(), merged=[];

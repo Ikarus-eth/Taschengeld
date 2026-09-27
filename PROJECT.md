@@ -6,7 +6,7 @@ anything — this file describes intent and workflow, the repo is the source of 
 ## What this is
 
 A single-file web app that tracks two children's reading challenges, pocket money,
-spending, and a virtual savings portfolio. Used by the kids on an iPad from the home
+spending, and a virtual savings portfolio, and the youngest child's pocket-money jar. Used by the kids on an iPad from the home
 screen; the parent view is PIN-gated. The whole interface is in English.
 
 - Repo: `Ikarus-eth/Taschengeld`, branch `main`, root folder
@@ -164,7 +164,8 @@ that is not a site failure. Use `raw.githubusercontent.com`, which is allowliste
 - **Pocket money is unconditional** and strictly separate from challenge payouts. It is
   never tied to grades, chores, or behaviour, and is never clawed back.
 - **It is paid on the first day of a period, never pro-rated.** Monthly on the 1st, weekly
-  on Monday, counting from the first such day on or after the challenge start. The original
+  on the child's `payDay` (Sunday for Artus and Nalu since Sept 2026, Monday if unset),
+  counting from the first such day on or after `allowanceFrom`, else the challenge start. The original
   code counted calendar months *touched*, so a 31 Aug start paid August and September
   within two days. Fixed Sept 2026; do not reintroduce month-difference arithmetic on the
   raw start date.
@@ -172,6 +173,25 @@ that is not a site failure. Use `raw.githubusercontent.com`, which is allowliste
   between Bali (no DST) and Europe (DST), so a raw ms division can be off by an hour and
   shift a week index or a vesting countdown by one. Applies to `weekIndex`,
   `allowancePeriods` and `daysHeld`.
+- **Pocket money is derived, not booked.** `allowancePeriods × amount` on every render, so
+  editing the amount, the pay day or `allowanceFrom` rewrites every past period. That made
+  the September backdating for Artus and Nalu a default value rather than a data
+  migration. It also means a birthday raise must not be done by editing the amount: that
+  would pay the new rate for every past week. When the first raise comes, add a dated
+  schedule (`[{from, amount}]`) and sum over segments; until then the parent view carries a
+  note saying so.
+- **Nalu's ledger is rupiah, counted in notes.** He is five and cannot read the zeros.
+  `allowanceIdr`, `note: 5000`, and `idr` on every record are authoritative; `eur` and
+  `fx` are stored for information only. A euro ledger would turn Rp 20,000 into 3.9 notes
+  the moment the rate moved. `calc()` hands jar children to `calcJar()`, which returns the
+  same field names the shared code reads (`earned: 0`, `cash` as a euro equivalent) plus
+  `balIdr`, `notes` and `rest`.
+- **The jar draws quantity as a shape**: rows of five, ten to a frame, filling from the
+  bottom, bundles of ten past 49. It is the one bold element in his view; the rest is the
+  app's normal cards. His tab bar is Jar and Parents only.
+- **Load and import both go through `upgrade()`.** A new child or a new per-child field
+  gets its default from `fresh()` on both paths, so an old backup restores with Nalu in
+  place. Before this, import assigned the parsed JSON straight to `S`.
 - Cash balance is allowed to go negative rather than blocking a payout entry, so the
   parent can settle amounts that do not match the ledger exactly.
 - Earned and spent are shown as two separate totals with the balance derived, rather than
@@ -205,7 +225,14 @@ See `README.md` in the repo for the full tables. Summary: Juna 20 weeks from 31 
 max €305, reading ladder €2→€8 plus four books plus three handstand milestones, the latter
 due 25 Dec 2026 rather than at the end of the challenge. Artus
 10 weeks, max €35.50, reading aloud 10 min/day plus a 15-minute bonus tier plus five
-early readers. No physical challenge for Artus in this cycle.
+early readers. No physical challenge for Artus in this cycle. Pocket money: Juna €20 on the
+1st, Artus €2 and Nalu Rp 20,000 every Sunday, both counted from 1 Sep 2026. Nalu has no
+challenge, only the jar.
+
+**Decided, not built yet (Sept 2026):** Artus's reading challenge is to be simplified to one
+rule: a good week is at least 15 minutes on 5 of 7 days, which advances the ladder; no
+bonus tier and no book payments; open-ended once the top rung is reached. Rung amounts
+were proposed (€2 → €2.50 → €3 → €3.50, stepping every 3 good weeks) but not confirmed.
 
 Design constraint agreed earlier: annual challenge payouts should stay within roughly
 2–3× the annual pocket money for that child. The €100 handstand prize is a deliberate
