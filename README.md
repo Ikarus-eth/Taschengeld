@@ -155,6 +155,16 @@ mistaken day can be corrected. Tapping cycles: empty → base minutes → bonus 
 where a bonus tier exists) → empty. Days older than 7 days and future days render dimmed
 and do not respond.
 
+**Approving a week (parent view).** A week that was read but not logged — or logged
+somewhere other than the app — can be approved under *Reading weeks*. Each tap cycles
+not approved → approved → approved with the bonus tier (Artus only) → not approved. An
+approved week counts exactly like a logged one: it takes the next step on the staircase
+and pays it. It is stored as a flag per week (`approved: {w0: 1, w1: 2}`), not as invented
+days, so the logged days stay what the child actually entered, and the approval survives
+a later change to the minutes per day. Current and past weeks only. Every tap is logged as
+*week approved by hand*, with the euro difference it made; approving a week that already
+counts by its logged days changes nothing.
+
 Juna ticks the **new words** box herself on the Goals screen once she has marked 10 words
 in a week; that fills the week's €1 cap. This week and last week are tappable, older weeks
 are locked. The parent view keeps a numeric entry for partial counts.
@@ -346,7 +356,8 @@ inflation of the numbers, not someone editing `localStorage` directly.
 ## Parent view
 
 PIN-gated, default `1234`, changeable in settings. For weekly pocket money it also sets the
-pay day and the date pocket money is counted from. Nalu's parent view shows the jar
+pay day and the date pocket money is counted from. Challenge children also get *Reading weeks*, where a
+parent can approve a week. Nalu's parent view shows the jar
 statement, cash handed over, his review log and his pocket-money settings. Covers: settlement figure, booking
 payouts, the review log, ticking off books and milestones, entering word counts, adding extra money, price
 refresh and manual price overrides, the auto-refresh toggle, challenge start dates, pocket

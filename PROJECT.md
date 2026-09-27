@@ -159,6 +159,13 @@ that is not a site failure. Use `raw.githubusercontent.com`, which is allowliste
   Once the time is up the wording states what happened rather than continuing to ask, and
   says that what was already earned is still hers. Missing a goal should not feel like a
   debt.
+- **A parent can approve a reading week; it is a flag, not fabricated days.**
+  `kid.approved["w"+i]` = 1 (counts) or 2 (counts with the bonus tier); `weekStats` treats
+  it as `done` whatever was logged. Filling in days on the child's behalf was the
+  alternative and was rejected: it would blur what the child logged, and every week filled
+  in at 10 minutes would silently stop counting when Artus moves to a 15-minute rule, since
+  the engine re-derives past weeks from the current `minutes`. Added Sept 2026 so September
+  could be approved after the fact.
 - **The word bonus is a weekly checkbox for the child**, not a number only a parent can
   enter: 10 marked words fills the week's €1 cap. This week and last week are tappable.
 - **Pocket money is unconditional** and strictly separate from challenge payouts. It is

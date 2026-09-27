@@ -323,13 +323,13 @@ function fresh(){
           {id:"h3",label:"Handstand for 3 seconds (3x in one day)",eur:20,done:null,due:"2026-12-25"},
           {id:"h10",label:"Handstand for 10 seconds",eur:80,done:null,due:"2026-12-25"},
           {id:"hw",label:"10 steps on your hands",eur:50,done:null,due:"2026-12-25"}],
-        days:{}, books:[], words:{}, spend:[], deposits:[], payouts:[], extras:[] },
+        days:{}, approved:{}, books:[], words:{}, spend:[], deposits:[], payouts:[], extras:[] },
       artus:{ name:"Artus", born:2019, start:"2026-08-31", weeks:10, minDays:5, minutes:10,
         bonusMinutes:15, bonusDays:4, bonusEur:1,
         allowance:2, allowanceEvery:"week", payDay:0, allowanceFrom:"2026-09-01",
         bookMin:"An early reader, one every two weeks", wordRate:0, wordCap:0,
         milestones:[],
-        days:{}, books:[], words:{}, spend:[], deposits:[], payouts:[], extras:[] },
+        days:{}, approved:{}, books:[], words:{}, spend:[], deposits:[], payouts:[], extras:[] },
       /* No challenge, only a jar. His ledger is kept in rupiah, not euro, so a
          Rp 20,000 week is always exactly four Rp 5,000 notes whatever the rate does. */
       nalu:{ name:"Nalu", born:2021, jar:true, note:5000,
@@ -614,10 +614,14 @@ function weekStats(k){
       if(m>=kid.minutes) n++;
       if(kid.bonusMinutes && m>=kid.bonusMinutes) nb++;
     }
-    const done=n>=kid.minDays;
-    const bonus = kid.bonusMinutes? nb>=kid.bonusDays : false;
+    /* a parent can approve a week that was read but not logged: 1 = the week
+       counts, 2 = it counts with the bonus tier. It is a flag on the week, not
+       invented days, so it survives a later change to the minutes per day. */
+    const ap=Number((kid.approved||{})["w"+i])||0;
+    const done=n>=kid.minDays || ap>=1;
+    const bonus = kid.bonusMinutes? (nb>=kid.bonusDays || ap>=2) : false;
     if(done) rank++;
-    out.push({i,start:ws,days:n,bonusDays:nb,done,bonus,past:i<nowWi,current:i===nowWi,
+    out.push({i,start:ws,days:n,bonusDays:nb,done,bonus,approved:ap,past:i<nowWi,current:i===nowWi,
       rate:done?(RATES[k][rank-1]||0):0, rank:done?rank:null});
   }
   return {weeks:out, qualified:rank, nowWi};
@@ -1294,12 +1298,13 @@ function logFlags(e,batch){
   if(e.a==="day"&&e.v===0) f.push("day cleared");
   if(e.a==="words"&&e.by==="k"&&e.v>0) f.push("ticked by "+K(e.k).name);
   if(e.a==="extra") f.push("money added by hand");
+  if(e.a==="approve") f.push("week approved by hand");
   if(e.a==="setting") f.push("setting changed");
   if(e.a==="import") f.push("backup restored");
   if(batch&&batch.has(e)) f.push(batch.get(e)+" days entered on this one day");
   return f;
 }
-const ACT={day:"Reading",words:"Words",spend:"Spent",extra:"Extra money",payout:"Payout",
+const ACT={day:"Reading",approve:"Approval",words:"Words",spend:"Spent",extra:"Extra money",payout:"Payout",
   book:"Book",goal:"Sport goal",buy:"Invested",sell:"Sold",setting:"Setting",import:"Backup"};
 function logLine(e){
   const kid=K(e.k);
@@ -1312,6 +1317,9 @@ function logLine(e){
   }
   switch(e.a){
     case "day": return e.v>0? "Logged "+e.v+" min for "+dshort(e.d) : "Cleared "+dshort(e.d);
+    case "approve": return (e.v? "Approved the reading week of "+dshort(e.d)+(e.v===2?" with the bonus":"")
+      : "Took back the approval for the reading week of "+dshort(e.d))+
+      (e.eur? " ("+(e.eur>0?"+":"")+eur(e.eur)+")" : "");
     case "words": return (e.v>0? "Marked "+e.v+" words" : "Cleared the words")+
       " for the week of "+dshort(e.d)+(e.eur?" ("+eur(e.eur)+")":"");
     case "spend": return "Spent "+eur(-e.eur)+" on "+esc(e.label)+
@@ -1352,6 +1360,7 @@ function reviewSummary(list,k,b){
     ["Reading days logged", days.length+(late?" · "+late+" filled in late":"")],
     ["Days cleared again", cleared.length? String(cleared.length) : "0"],
     ["Word weeks marked", String(words)],
+    ["Weeks approved by you", String(list.filter(e=>e.a==="approve"&&e.v>0).length)],
     ["Extra money added", extra? eur(extra) : "—"],
     ["Spending entered", spent? eur(spent) : "—"],
     ["Payouts booked", paid? eur(paid) : "—"],
@@ -1462,7 +1471,7 @@ function vParents(c){
    '<button class="btn small ghost" onclick="addBook()">Tick off a book</button>'+
    '<button class="btn small ghost" onclick="addExtra()">Add extra money</button>'+
    (kid.wordRate?'<button class="btn small ghost" onclick="addWords()">Enter word count</button>':'')+
-   '</div></div></section>'+vReview()+ms+
+   '</div></div></section>'+approvalSection(c)+vReview()+ms+
    '<section><h2>Prices</h2><div class="card">'+
    '<div style="display:flex;gap:8px;flex-wrap:wrap"><button class="btn small" onclick="runFeed(this)">Fetch prices now</button>'+
    '<button class="btn small ghost" onclick="resetBase()">Set start values to today</button></div>'+
@@ -1504,6 +1513,25 @@ function vParents(c){
      '<input type="number" step="0.5" value="'+kid.bonusEur+'" onchange="kid_(Number(this.value)||0,\'bonusEur\')"></div>':'')+
    '<label>PIN</label><input type="text" value="'+esc(S.pin)+'" onchange="setPin(this.value)">'+
    '</div></section>'+backupSection();
+}
+function approvalSection(c){
+  const kid=K(), nowWi=c.ws.nowWi;
+  const rows=c.ws.weeks.filter(w=>w.i<=nowWi).slice().reverse().map(w=>{
+    const ap=w.approved, amt=w.rate+(w.bonus?kid.bonusEur:0);
+    const lab= ap===2? "Approved + bonus" : ap===1? "Approved" : "Approve";
+    return '<div class="row"><div class="grow"><div>Week '+(w.i+1)+' · '+dshort(iso(w.start))+' – '+
+      dshort(iso(weekEnd(KID,w.i)))+'</div><div class="sub">'+w.days+' of '+kid.minDays+' days logged'+
+      (kid.bonusMinutes? ' · '+w.bonusDays+'× '+kid.bonusMinutes+' min' : '')+'</div></div>'+
+      '<div class="money">'+(amt>0? fmt(amt) : '—')+'</div>'+
+      '<button class="btn small'+(ap?'':' ghost')+'" onclick="approveWeek('+w.i+')">'+lab+'</button></div>';
+  }).join("");
+  if(!rows) return "";
+  return '<section><h2>Reading weeks</h2><div class="card">'+rows+
+    '<p class="sub" style="margin:12px 0 0">Approve a week that was read but not logged. It then counts like a '+
+    'logged week: it moves the staircase and pays that step'+
+    (kid.bonusMinutes? '. Tap again to add the '+fmt(kid.bonusEur)+' bonus, a third time to take the approval back.'
+      : '. Tap again to take the approval back.')+
+    ' Logged days are not changed.</p></div></section>';
 }
 function backupSection(){
   return '<section><h2>Backup</h2><div class="card"><div style="display:flex;gap:8px;flex-wrap:wrap">'+
@@ -1710,6 +1738,19 @@ function setManualPx(inst,v){ const sl=S.prices[inst], was=sl.px;
   if(was!==sl.px) logEvent(KID,"setting",{d:iso(today()),label:INSTR[inst].name+" price",
     v:String(sl.px),p:String(was)});
   save(); render(); }
+function approveWeek(i){
+  const kid=K();
+  if(kid.jar || i<0 || i>=kid.weeks || i>weekIndex(KID,today())) return;
+  if(!kid.approved || typeof kid.approved!=="object") kid.approved={};
+  const key="w"+i, was=Number(kid.approved[key])||0, top=kid.bonusMinutes? 2 : 1;
+  const next= was>=top? 0 : was+1;
+  const before=calc(KID).earned;
+  if(next) kid.approved[key]=next; else delete kid.approved[key];
+  const after=calc(KID).earned;
+  logEvent(KID,"approve",{d:iso(addD(monday(new Date(kid.start+"T12:00:00")),i*7)),v:next,p:was,
+    eur:Math.round((after-before)*100)/100});
+  save(); render();
+}
 function logDay(min){
   const k=iso(today()), kid=K(), cur=kid.days[k]||0;
   if(cur===min) delete kid.days[k]; else kid.days[k]=min;
