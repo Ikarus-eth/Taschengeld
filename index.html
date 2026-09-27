@@ -250,7 +250,9 @@ const AUTO_MS=6*3600*1000, RETRY_MS=30*60*1000;
 const KIDS=["juna","artus","nalu"];
 const RATES={
   juna:[2,2,2,2, 4,4,4,4, 5,5,5,5, 6,6,6,6, 8,8,8,8],
-  artus:[1,1,1, 1.5,1.5,1.5, 2,2,2,2],
+  /* Artus since 27 Sept 2026: open-ended, the last step repeats for every good
+     week after it. Was [1,1,1, 1.5,1.5,1.5, 2,2,2,2] over 10 weeks with a bonus. */
+  artus:[2,2,2, 2.5,2.5,2.5, 3,3,3, 3.5],
   nalu:[]
 };
 const BOOKS={juna:[4,7,10,14], artus:[2,2,2,2,2], nalu:[]};
@@ -324,8 +326,8 @@ function fresh(){
           {id:"h10",label:"Handstand for 10 seconds",eur:80,done:null,due:"2026-12-25"},
           {id:"hw",label:"10 steps on your hands",eur:50,done:null,due:"2026-12-25"}],
         days:{}, approved:{}, books:[], words:{}, spend:[], deposits:[], payouts:[], extras:[] },
-      artus:{ name:"Artus", born:2019, start:"2026-08-31", weeks:10, minDays:5, minutes:10,
-        bonusMinutes:15, bonusDays:4, bonusEur:1,
+      artus:{ name:"Artus", born:2019, start:"2026-08-31", weeks:10, minDays:5, minutes:15,
+        bonusMinutes:0, bonusDays:0, bonusEur:0, openEnded:true, booksClosed:true, scheme:2,
         allowance:2, allowanceEvery:"week", payDay:0, allowanceFrom:"2026-09-01",
         bookMin:"An early reader, one every two weeks", wordRate:0, wordCap:0,
         milestones:[],
@@ -381,6 +383,11 @@ function upgrade(p){
     out.kids={};
     for(const k of KIDS){
       const kid=Object.assign({},f.kids[k],(p.kids||{})[k]||{});
+      /* stored before rule versions existed: keep the old rules until
+         migrateSchemes() converts them and records it */
+      if((p.kids||{})[k] && (p.kids||{})[k].scheme===undefined && f.kids[k].scheme){
+        kid.scheme=1; kid.openEnded=false; kid.booksClosed=false;
+      }
       const d={};
       for(const key in (kid.days||{})){ const val=kid.days[key]; d[key]= val===true? kid.minutes : Number(val)||0; }
       kid.days=d;
@@ -606,7 +613,9 @@ function setSheet(v){
 function weekStats(k){
   const kid=K(k), out=[], m0=monday(new Date(kid.start+"T12:00:00")), nowWi=weekIndex(k,today());
   let rank=0;
-  for(let i=0;i<kid.weeks;i++){
+  /* an open-ended ladder has no last week: count up to the current one */
+  const nW=kid.openEnded? Math.max(0,nowWi+1) : kid.weeks;
+  for(let i=0;i<nW;i++){
     const ws=addD(m0,i*7);
     let n=0, nb=0;
     for(let d=0;d<7;d++){
@@ -622,9 +631,15 @@ function weekStats(k){
     const bonus = kid.bonusMinutes? (nb>=kid.bonusDays || ap>=2) : false;
     if(done) rank++;
     out.push({i,start:ws,days:n,bonusDays:nb,done,bonus,approved:ap,past:i<nowWi,current:i===nowWi,
-      rate:done?(RATES[k][rank-1]||0):0, rank:done?rank:null});
+      rate:done?rung(k,rank):0, rank:done?rank:null});
   }
   return {weeks:out, qualified:rank, nowWi};
+}
+/* what the r-th good week pays; an open-ended ladder repeats its last step */
+function rung(k,r){
+  const R=RATES[k]||[];
+  if(r>=1 && r<=R.length) return R[r-1];
+  return K(k).openEnded && R.length && r>R.length? R[R.length-1] : 0;
 }
 /* The challenge runs in whole Monday-to-Sunday weeks, so the deadline is the
    Sunday that closes the last week, not start + weeks*7. */
@@ -701,11 +716,11 @@ function calc(k){
   let remain=0, remainB=0;
   for(const w of ws.weeks){ if(!w.past||w.current){ if(!w.done) remain++; if(!w.bonus) remainB++; } }
   let futureWeek=0;
-  for(let j=0;j<remain;j++) futureWeek+=RATES[k][ws.qualified+j]||0;
+  for(let j=0;j<remain;j++) futureWeek+=rung(k,ws.qualified+j+1);
   const bonusLeft=remainB*kid.bonusEur;
 
   const bookEur=kid.books.reduce((s,b,i)=>s+(BOOKS[k][i]||0),0);
-  const bookLeft=BOOKS[k].slice(kid.books.length).reduce((a,b)=>a+b,0);
+  const bookLeft=kid.booksClosed? 0 : BOOKS[k].slice(kid.books.length).reduce((a,b)=>a+b,0);
   let wordEur=0, wordLeft=0, wordWeeks=0;
   if(kid.wordRate){
     for(const w of ws.weeks){
@@ -790,6 +805,7 @@ function render(){
     : '€1 = '+idr(S.fx)+' · <a href="#" onclick="toggleCur();return false;" style="color:inherit">show in '+(CUR==="EUR"?"rupiah":"euro")+'</a>';
 }
 function hero(c){
+  if(K().openEnded) return heroOpen(c);
   const max=c.earned+c.open, pe=max?c.earned/max*100:0, po=max?c.open/max*100:0;
   return '<div class="hero"><h1>Earned so far</h1>'+
    '<div class="big num">'+fmt(c.earned)+'</div>'+
@@ -806,7 +822,7 @@ function cycleDay(key){
   if(!editableDay(key)) return;
   const kid=K(), cur=kid.days[key]||0;
   let next;
-  if(cur===0) next=kid.minutes;
+  if(cur===0 || cur<kid.minutes) next=kid.minutes;
   else if(kid.bonusMinutes && cur<kid.bonusMinutes) next=kid.bonusMinutes;
   else next=0;
   if(next) kid.days[key]=next; else delete kid.days[key];
@@ -843,7 +859,7 @@ function vToday(c){
   if(!wk) msg="This week is not part of the challenge.";
   else{
     const need=Math.max(0,kid.minDays-wk.days);
-    msg = wk.done? "Week done — "+fmt(RATES[KID][wk.rank-1]||0)+" earned."
+    msg = wk.done? "Week done — "+fmt(rung(KID,wk.rank))+" earned."
       : need+(need===1?" more day":" more days")+" until this week counts.";
     if(kid.bonusMinutes){
       const nb=Math.max(0,kid.bonusDays-wk.bonusDays);
@@ -858,6 +874,7 @@ function vToday(c){
     '</div></section>'+stairs(c);
 }
 function stairs(c){
+  if(K().openEnded) return stairsOpen(c);
   const maxR=Math.max.apply(null,RATES[KID]);
   const bars=c.ws.weeks.map(w=>{
     const h=Math.max(10,(RATES[KID][w.i]/maxR)*100);
@@ -892,6 +909,7 @@ function deadlineCard(){
    '</div></section>';
 }
 function vGoals(c){
+  if(K().openEnded) return vGoalsOpen(c);
   const kid=K();
   const end=challengeEnd(KID), endShort=dshort(iso(end)), over=daysUntil(end)<0;
   const shared=msSharedDue(KID);
@@ -992,7 +1010,7 @@ function vMoney(c){
    '<section><h2>Where the money comes from</h2><div class="card"><table>'+
    '<tr><td>Reading, week by week</td><td>'+fmt(c.weekEur)+'</td></tr>'+
    (kid.bonusMinutes?'<tr><td>Extra bonus</td><td>'+fmt(c.bonusEur)+'</td></tr>':'')+
-   '<tr><td>Books</td><td>'+fmt(c.bookEur)+'</td></tr>'+
+   (kid.booksClosed&&!c.bookEur? '' : '<tr><td>Books</td><td>'+fmt(c.bookEur)+'</td></tr>')+
    (kid.wordRate?'<tr><td>New words</td><td>'+fmt(c.wordEur)+'</td></tr>':'')+
    (kid.milestones.length?'<tr><td>Sport goals</td><td>'+fmt(c.msEur)+'</td></tr>':'')+
    '<tr><td>Pocket money<div class="sub">next '+fmt(kid.allowance)+' on '+dday(iso(nextPayday(kid,today())))+'</div></td><td>'+fmt(c.allowance)+'</td></tr>'+
@@ -1465,10 +1483,10 @@ function vParents(c){
    '<tr><td>Portfolio value</td><td>'+fmt(inv.value)+'</td></tr>'+
    '<tr><td><b>Payout today</b></td><td><b>'+fmt(settle)+'</b></td></tr>'+
    '<tr><td class="muted">Bonus still maturing</td><td class="muted">'+fmt(inv.matchOpen)+'</td></tr>'+
-   '<tr><td class="muted">Still reachable in the challenge</td><td class="muted">'+fmt(c.open)+'</td></tr></table>'+
+   '<tr><td class="muted">'+(kid.openEnded?"Still possible this week":"Still reachable in the challenge")+'</td><td class="muted">'+fmt(c.open)+'</td></tr></table>'+
    '<div style="margin-top:14px;display:flex;gap:8px;flex-wrap:wrap">'+
    '<button class="btn small" onclick="addPayout()">Book a payout</button>'+
-   '<button class="btn small ghost" onclick="addBook()">Tick off a book</button>'+
+   (kid.booksClosed? '' : '<button class="btn small ghost" onclick="addBook()">Tick off a book</button>')+
    '<button class="btn small ghost" onclick="addExtra()">Add extra money</button>'+
    (kid.wordRate?'<button class="btn small ghost" onclick="addWords()">Enter word count</button>':'')+
    '</div></div></section>'+approvalSection(c)+vReview()+ms+
@@ -1516,7 +1534,9 @@ function vParents(c){
 }
 function approvalSection(c){
   const kid=K(), nowWi=c.ws.nowWi;
-  const rows=c.ws.weeks.filter(w=>w.i<=nowWi).slice().reverse().map(w=>{
+  let list=c.ws.weeks.filter(w=>w.i<=nowWi).slice().reverse();
+  if(kid.openEnded) list=list.slice(0,12);
+  const rows=list.map(w=>{
     const ap=w.approved, amt=w.rate+(w.bonus?kid.bonusEur:0);
     const lab= ap===2? "Approved + bonus" : ap===1? "Approved" : "Approve";
     return '<div class="row"><div class="grow"><div>Week '+(w.i+1)+' · '+dshort(iso(w.start))+' – '+
@@ -1715,6 +1735,83 @@ function jmSave(){
   dlg.close(); save(); render();
 }
 
+/* ---- open-ended ladder (Artus since 27 Sept 2026) ----
+   No end date and no "still possible" total, because there is no last week.
+   The screens show what the next good week pays and when it goes up instead. */
+function ladderNext(k,q){
+  const R=RATES[k], cur=rung(k,q+1);
+  if(q+1>=R.length) return {cur, top:true};
+  for(let j=q+1;j<R.length;j++) if(R[j]>cur) return {cur, top:false, after:j-q, up:R[j]};
+  return {cur, top:true};
+}
+function heroOpen(c){
+  const kid=K(), q=c.ws.qualified, wk=c.ws.weeks[c.ws.nowWi], R=RATES[KID];
+  const now= wk&&wk.done? wk.rate : rung(KID,q+1);
+  return '<div class="hero"><h1>Earned so far</h1>'+
+   '<div class="big num">'+fmt(c.earned)+'</div>'+
+   '<div class="legend" style="margin-top:14px"><div>good weeks<b class="num">'+q+'</b></div>'+
+   '<div>'+(wk&&wk.done?"this week, done":"this week")+'<b class="num">'+fmt(now)+'</b></div>'+
+   '<div style="text-align:right">top step<b class="num">'+fmt(R[R.length-1])+'</b></div></div></div>';
+}
+function stairsOpen(c){
+  const R=RATES[KID], top=R[R.length-1], q=c.ws.qualified, nx=ladderNext(KID,q);
+  const bars=R.map((r,i)=>{
+    const won=i<q, now= q<R.length? i===q : i===R.length-1;
+    return '<div class="st '+(won?"won":"")+' '+(now?"now":"")+'"><i style="height:'+Math.max(10,r/top*100)+'%"></i></div>';
+  }).join("");
+  const line= nx.top? 'You are on the top step: every good week pays '+fmt(top)+', for as long as you keep reading.'
+    : 'Each good week pays '+fmt(nx.cur)+' now. After '+nx.after+(nx.after===1?' more good week':' more good weeks')+
+      ' it goes up to '+fmt(nx.up)+'.';
+  return '<section><h2>The staircase</h2><div class="card"><div class="stairs">'+bars+'</div>'+
+   '<div class="stairlabels"><span>Good week 1 · '+fmt(R[0])+'</span><span>'+R.length+' and every week after · '+fmt(top)+'</span></div>'+
+   '<p class="sub" style="margin:10px 0 0">'+q+(q===1?' good week':' good weeks')+' so far. '+line+
+   ' A missed week costs you nothing — it only takes longer to reach the top step.</p></div></section>';
+}
+function vGoalsOpen(c){
+  const kid=K(), R=RATES[KID], q=c.ws.qualified, st=new Date(kid.start+"T12:00:00");
+  const groups=[];
+  R.forEach((r,i)=>{ const g=groups[groups.length-1]; if(g&&g.r===r) g.to=i+1; else groups.push({r,from:i+1,to:i+1}); });
+  const rows=groups.map((g,gi)=>{
+    const last=gi===groups.length-1;
+    const name= last? 'Good week '+g.from+' and every one after' : 'Good weeks '+g.from+(g.to>g.from?'–'+g.to:'');
+    const done= last? q>=g.from : q>=g.to, here= !done && q+1>=g.from && q+1<=(last?Infinity:g.to);
+    return '<div class="row"><div class="check '+(done?"on":"")+'"></div><div class="grow"><div>'+name+'</div>'+
+      '<div class="sub">'+(done&&last? "you are here" : done? "done" : here? "you are here" : "")+'</div></div>'+
+      '<div class="money">'+fmt(g.r)+' each</div></div>';
+  }).join("");
+  const when= today()<st
+    ? '<div style="font-size:21px;font-weight:700">Starts '+longDate(st)+'</div>'
+    : '<div style="font-size:21px;font-weight:700">No end date</div>';
+  const books=kid.books.length? '<section><h2>Books</h2><div class="card">'+kid.books.map((b,i)=>
+    '<div class="row"><div class="check on"></div><div class="grow"><div>'+esc(b.title)+'</div><div class="sub">'+
+    dshort(b.date)+'</div></div><div class="money">'+fmt(BOOKS[KID][i]||0)+'</div></div>').join("")+'</div></section>' : '';
+  return heroOpen(c)+
+    '<section><h2>When</h2><div class="card">'+when+
+    '<div class="sub">A good week is '+kid.minutes+' minutes of reading on '+kid.minDays+' days of the week. '+
+    'Every good week counts, for as long as you keep reading.</div></div></section>'+
+    '<section><h2>The steps</h2><div class="card">'+rows+'</div></section>'+books;
+}
+/* Sept 2026: Artus moves to one rule, at least 15 minutes on 5 of 7 days, with no
+   bonus tier, no book payments and no end date, on a higher ladder. Pay is derived
+   from the current rules, so a week logged at 10 minutes would silently stop
+   counting. Before switching, every week that counted under the old rules, or
+   earned the old bonus, is therefore approved; books already ticked keep their €2.
+   Nothing he had earned can go down. Runs once, recorded in the review log. */
+function migrateSchemes(){
+  const a=S.kids.artus;
+  if(!a || (Number(a.scheme)||1)>=2) return false;
+  const ws=weekStats("artus"), kept=[];
+  if(!a.approved || typeof a.approved!=="object") a.approved={};
+  for(const w of ws.weeks) if((w.past||w.current) && (w.done||w.bonus) && !a.approved["w"+w.i]){
+    a.approved["w"+w.i]=1; kept.push(w.i+1);
+  }
+  const was=a.minutes+" min on "+a.minDays+" days"+(a.bonusMinutes? ", bonus for "+a.bonusMinutes+" min":"")+", "+a.weeks+" weeks";
+  Object.assign(a,{minutes:15, bonusMinutes:0, bonusDays:0, bonusEur:0, openEnded:true, booksClosed:true, scheme:2});
+  logEvent("artus","setting",{d:iso(today()), by:"p", label:"Reading rules", p:was,
+    v:"15 min on 5 days, no bonus, no end date"+(kept.length? "; week "+kept.join(", ")+" kept as approved" : "")});
+  return true;
+}
+
 /* ---- actions ---- */
 function kid_(v,f,label){ const was=K()[f]; K()[f]=v;
   const show=x=> f==="payDay"? (DAYNAME[x]||String(x)) : String(x);
@@ -1740,7 +1837,7 @@ function setManualPx(inst,v){ const sl=S.prices[inst], was=sl.px;
   save(); render(); }
 function approveWeek(i){
   const kid=K();
-  if(kid.jar || i<0 || i>=kid.weeks || i>weekIndex(KID,today())) return;
+  if(kid.jar || i<0 || (!kid.openEnded && i>=kid.weeks) || i>weekIndex(KID,today())) return;
   if(!kid.approved || typeof kid.approved!=="object") kid.approved={};
   const key="w"+i, was=Number(kid.approved[key])||0, top=kid.bonusMinutes? 2 : 1;
   const next= was>=top? 0 : was+1;
@@ -1851,6 +1948,7 @@ function addPayout(){ form("Book a payout",[{id:"eur",label:"Amount (€)",type:
     logEvent(KID,"payout",{d:iso(today()),eur:-v.eur,label:v.note||""}); }); }
 function addBook(){
   const kid=K();
+  if(kid.booksClosed){ alert("Books are not paid for "+kid.name+" any more."); return; }
   if(kid.books.length>=BOOKS[KID].length){ alert("All books are already ticked off."); return; }
   form("Tick off a book",[{id:"title",label:"Title"}],v=>{
     kid.books.push({title:v.title||"Book",date:iso(today())});
@@ -2042,11 +2140,13 @@ function importJSON(){
       S.seq=0; for(const e of S.log){ if(!e.n) e.n=++S.seq; else if(e.n>S.seq) S.seq=e.n; }
       S.logStart=keepStart&&(!S.logStart||keepStart<S.logStart)? keepStart : (S.logStart||new Date().toISOString());
       logEvent(KID,"import",{d:iso(today()),label:"backup restored"});
+      migrateSchemes();
       save(); render(); alert("Backup loaded.");
     }
     catch(e){ alert("That file could not be read."); } }; r.readAsText(i.files[0]); };
   i.click();
 }
+if(migrateSchemes()) save();
 render();
 setTimeout(autoRefresh,1500);
 document.addEventListener("visibilitychange",()=>{ if(!document.hidden) setTimeout(autoRefresh,400); });

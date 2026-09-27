@@ -53,15 +53,23 @@ data in Safari wipes all of them).
 
 Maximum: **€305**
 
-### Artus — 10 weeks, from 31 Aug 2026 (ends Sun 8 Nov 2026)
+### Artus — from 31 Aug 2026, no end date (rules changed 27 Sep 2026)
 | Item | Payout |
 |---|---|
-| Reading aloud, 10 min/day, ≥5 of 7 days | weeks 1–3 €1 · 4–6 €1.50 · 7–10 €2 |
-| Bonus: 15 min on ≥4 days in a week | €1 |
-| Early readers, one per fortnight | €2 each, 5 books |
+| Good week: reading ≥15 min on ≥5 of 7 days | good weeks 1–3 €2 · 4–6 €2.50 · 7–9 €3 · 10 and every one after €3.50 |
 | Pocket money | €2 every Sunday from 6 Sep 2026, unconditional |
 
-Maximum: **€35.50**. No physical challenge in this cycle.
+One rule, nothing else: no bonus tier, no book payments, no physical challenge, and no
+last week — the top step repeats for as long as he keeps reading (`openEnded`). There is
+therefore no maximum; a full year of good weeks is about €170.
+
+Until 27 Sep 2026 the rules were 10 min/day with a €1 bonus for 15 min on 4 days, €1 →
+€1.50 → €2 over 10 weeks, and €2 per early reader (max €35.50). The switch runs once on the
+iPad (`migrateSchemes()`): every week that had counted, or earned the old bonus, is marked
+approved before the floor moves to 15 minutes, and books already ticked keep their €2, so
+nothing he had earned can go down. Pay is derived from the current rules, so without that
+step every week logged at 10 minutes would have stopped counting. The switch is recorded in
+the review log as *Reading rules*.
 
 ### Nalu — pocket money only (born 2021)
 | Item | Payout |
@@ -131,7 +139,9 @@ reached after the date — it pays, and the review log records when it was booke
 
 Everything else runs in whole Monday-to-Sunday weeks, so that deadline is the Sunday closing
 the last week — `monday(start) + weeks*7 - 1`, not `start + weeks*7`. Juna: Sunday 17 Jan
-2027. Artus: Sunday 8 Nov 2026. A start date that is not a Monday still ends on a Sunday.
+2027. A start date that is not a Monday still ends on a Sunday. An open-ended ladder (Artus)
+has no deadline: the engine counts weeks up to the current one, and the Goals screen shows
+the steps and "No end date" instead of a countdown.
 
 The Goals screen opens with a Time left card: how long is left in words, the deadline
 written out, a bar of weeks elapsed, and which week of how many. It has three states —
@@ -157,7 +167,8 @@ and do not respond.
 
 **Approving a week (parent view).** A week that was read but not logged — or logged
 somewhere other than the app — can be approved under *Reading weeks*. Each tap cycles
-not approved → approved → approved with the bonus tier (Artus only) → not approved. An
+not approved → approved → not approved, with an extra "approved with the bonus" state only
+for a child who has a bonus tier (none at the moment). An
 approved week counts exactly like a logged one: it takes the next step on the staircase
 and pays it. It is stored as a flag per week (`approved: {w0: 1, w1: 2}`), not as invented
 days, so the logged days stay what the child actually entered, and the approval survives

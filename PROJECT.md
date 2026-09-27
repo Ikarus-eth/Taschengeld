@@ -166,6 +166,17 @@ that is not a site failure. Use `raw.githubusercontent.com`, which is allowliste
   in at 10 minutes would silently stop counting when Artus moves to a 15-minute rule, since
   the engine re-derives past weeks from the current `minutes`. Added Sept 2026 so September
   could be approved after the fact.
+- **Rule changes on a derived engine need a carry-over.** Pay is recomputed from the
+  current rules on every render, so raising Artus's floor from 10 to 15 minutes would have
+  silently un-counted every week he logged at 10. `migrateSchemes()` runs once
+  (`kid.scheme` 1 → 2): it approves every past week that counted or earned the old bonus,
+  then switches the rules, and logs it. A kid stored before `scheme` existed is read as
+  scheme 1 in `upgrade()`, because `fresh()` already carries scheme 2 and would otherwise
+  hide the old rules. Any future rule change should follow the same pattern.
+- **Open-ended ladders** (`openEnded`): `weekStats` counts weeks up to the current one,
+  `rung()` repeats the last step, "still possible" is this week only, and the hero,
+  staircase and Goals screen have open-ended versions. Juna's fixed 20 weeks use the
+  original code paths untouched.
 - **The word bonus is a weekly checkbox for the child**, not a number only a parent can
   enter: 10 marked words fills the week's €1 cap. This week and last week are tappable.
 - **Pocket money is unconditional** and strictly separate from challenge payouts. It is
@@ -230,16 +241,17 @@ company prices do not, and would need the manual fields.
 
 See `README.md` in the repo for the full tables. Summary: Juna 20 weeks from 31 Aug 2026,
 max €305, reading ladder €2→€8 plus four books plus three handstand milestones, the latter
-due 25 Dec 2026 rather than at the end of the challenge. Artus
-10 weeks, max €35.50, reading aloud 10 min/day plus a 15-minute bonus tier plus five
-early readers. No physical challenge for Artus in this cycle. Pocket money: Juna €20 on the
-1st, Artus €2 and Nalu Rp 20,000 every Sunday, both counted from 1 Sep 2026. Nalu has no
-challenge, only the jar.
+due 25 Dec 2026 rather than at the end of the challenge. Artus since 27 Sep 2026: one rule,
+a good week is at least 15 minutes on 5 of 7 days; €2 → €2.50 → €3 → €3.50 stepping every
+3 good weeks, the top step repeating with no end date; no bonus tier, no book payments, no
+physical challenge. (Until then: 10 min/day plus a 15-minute bonus tier plus five early
+readers over 10 weeks, max €35.50.) Pocket money: Juna €20 on the 1st, Artus €2 and Nalu
+Rp 20,000 every Sunday, both counted from 1 Sep 2026. Nalu has no challenge, only the jar.
 
-**Decided, not built yet (Sept 2026):** Artus's reading challenge is to be simplified to one
-rule: a good week is at least 15 minutes on 5 of 7 days, which advances the ladder; no
-bonus tier and no book payments; open-ended once the top rung is reached. Rung amounts
-were proposed (€2 → €2.50 → €3 → €3.50, stepping every 3 good weeks) but not confirmed.
+The step amounts were proposed in chat and implemented when the 15-minute floor and "no
+bonus" were confirmed; they were not separately confirmed. Changing them later re-derives
+every past week, in both directions — lowering them would lower what he has already seen
+as earned.
 
 Design constraint agreed earlier: annual challenge payouts should stay within roughly
 2–3× the annual pocket money for that child. The €100 handstand prize is a deliberate
