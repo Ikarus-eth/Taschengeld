@@ -1440,6 +1440,7 @@ function vReview(){
     body+='<div class="logrow"><div class="logt num">'+hhmm(e.t)+'</div>'+
       '<div class="grow"><div>'+logLine(e)+'</div>'+
       (f.length?'<div class="sub flag">⚑ '+f.join(" · ")+'</div>':'')+
+      (logUndoTarget(e)? '<button class="btn tiny ghost" style="margin-top:6px" onclick="logUndo('+(e.n||0)+')">Undo</button>' : '')+
       '</div><div class="sub who">'+(e.by==="p"?"you":esc(K(e.k).name))+'</div></div>';
   }
   if(!list.length) body='<p class="sub" style="margin:0">Nothing recorded in this window.</p>';
@@ -1459,6 +1460,44 @@ function vReview(){
     'delete it — restoring a backup merges the two logs rather than replacing them. It is a '+
     'record, not a lock: anyone with the iPad and some patience could still edit the stored '+
     'data directly.</div></div></section>';
+}
+/* ---- undo straight from the review log ----
+   A sale, purchase, extra or payout can be reversed from its log line, as long
+   as the record it created still exists unchanged. The reversal is itself a
+   new "fix" entry; the original line stays where it is. Older sell entries
+   carry no deposit id, so they are matched on date, amounts and instrument. */
+const UNDOARR={spend:"spend",extra:"extras",payout:"payouts"};
+function logUndoTarget(e){
+  const kid=K(e.k);
+  if(!kid||e.k!==KID) return null;
+  const near=(a,b)=>Math.abs((Number(a)||0)-(Number(b)||0))<0.005;
+  if(e.a==="sell"){
+    const d=(kid.deposits||[]).find(x=>x.sold && (e.dep!==undefined? String(x.id)===String(e.dep) :
+      (x.soldDate===e.d && near(x.soldValue,e.eur) && near(x.eur,e.p) &&
+       INSTR[x.instrument] && INSTR[x.instrument].name===e.label)));
+    return d? {kind:"sale", id:d.id} : null;
+  }
+  const kind=UNDOARR[e.a];
+  if(!kind) return null;
+  const arr=kid[kind]||[];
+  for(let i=arr.length-1;i>=0;i--){
+    const x=arr[i], lab= kind==="payouts"? (x.note||"") : (x.label||"");
+    if(x.date!==e.d || lab!==(e.label||"") || !near(x.eur,Math.abs(Number(e.eur)||0))) continue;
+    if(e.idr && Number(x.idr)!==Number(e.idr)) continue;
+    return {kind:kind, i:i};
+  }
+  return null;
+}
+function logUndo(n){
+  const e=(S.log||[]).find(x=>x.n===n && x.k===KID);
+  const t=e&&logUndoTarget(e);
+  if(!t){ alert("This entry has already been changed or reversed."); return; }
+  if(t.kind==="sale"){ undoSale(t.id); return; }
+  const x=K()[t.kind][t.i];
+  if(!confirm("Undo this "+FIXWORD[t.kind]+"?\n\n"+fixDesc(t.kind,x)+
+    "\n\nIt is removed and the log records the reversal.")) return;
+  fixRemove(t.kind,t.i);
+  save(); render();
 }
 function markReviewed(){
   /* per child: checking Juna's week must not clear what is new for Artus */
@@ -2196,7 +2235,7 @@ function doSell(id){
   d.soldPx=now;
   d.matchClaimed=vested;
   logEvent(KID,"sell",{d:d.soldDate,label:INSTR[d.instrument].name,eur:d.soldValue,
-    v:vested?1:0,p:Math.round(d.eur*100)/100});
+    v:vested?1:0,p:Math.round(d.eur*100)/100,dep:d.id});
   dlg.close(); save(); render();
 }
 const SHEET_TEMPLATE=[

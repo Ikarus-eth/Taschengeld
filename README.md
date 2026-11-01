@@ -386,6 +386,12 @@ purchase price: the 365-day clock carries on from the buy date and the 50% match
 if the sale never happened. The balance drops by the sale proceeds. Logged as a `fix` entry
 with `kind: deposits` and the balance effect.
 
+**Undo in the review log.** Sale, purchase, extra-money and payout lines in the Review
+section carry an *Undo* button while the record they created still exists unchanged. A sale
+is undone as above; the others are deleted. Either way the reversal is a new `fix` entry and
+the original line stays. Sell entries carry the deposit id (`dep`) since 1 Nov 2026; older
+ones are matched on sale date, amounts and instrument.
+
 Not a security boundary: it is a record on a device the child holds. It catches casual
 inflation of the numbers, not someone editing `localStorage` directly.
 
