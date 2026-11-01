@@ -1332,12 +1332,13 @@ function logFlags(e,batch){
   if(e.a==="extra") f.push("money added by hand");
   if(e.a==="approve") f.push("week approved by hand");
   if(e.a==="setting") f.push("setting changed");
+  if(e.a==="fix") f.push("corrected by hand");
   if(e.a==="import") f.push("backup restored");
   if(batch&&batch.has(e)) f.push(batch.get(e)+" days entered on this one day");
   return f;
 }
 const ACT={day:"Reading",approve:"Approval",words:"Words",spend:"Spent",extra:"Extra money",payout:"Payout",
-  book:"Book",goal:"Sport goal",buy:"Invested",sell:"Sold",setting:"Setting",import:"Backup"};
+  book:"Book",goal:"Sport goal",buy:"Invested",sell:"Sold",setting:"Setting",import:"Backup",fix:"Correction"};
 function logLine(e){
   const kid=K(e.k);
   if(kid&&kid.jar&&(e.a==="spend"||e.a==="extra"||e.a==="payout")){
@@ -1366,6 +1367,8 @@ function logLine(e){
       (e.v?" — bonus kept":" — bonus given up");
     case "setting": return esc(e.label)+": "+esc(e.p)+" → "+esc(e.v);
     case "import": return "A backup was restored onto this iPad";
+    case "fix": return (e.v? "Corrected" : "Deleted")+" "+(FIXWORD[e.kind]||"entry")+": "+esc(e.p)+
+      (e.v? " → "+esc(e.v) : "");
     default: return e.a;
   }
 }
@@ -1396,6 +1399,7 @@ function reviewSummary(list,k,b){
     ["Extra money added", extra? eur(extra) : "—"],
     ["Spending entered", spent? eur(spent) : "—"],
     ["Payouts booked", paid? eur(paid) : "—"],
+    ["Entries corrected", String(list.filter(e=>e.a==="fix").length)],
     ["Buys and sells", String(trades)],
     ["Settings touched", String(sets)],
     ["Earned", (base!==null? eur(base)+" → ":"")+eur(now)+
@@ -1415,6 +1419,7 @@ function reviewSummaryJar(list,k,b){
     ["Put in by hand", sumIdr("extra")? idr(sumIdr("extra")) : "—"],
     ["Taken out", sumIdr("spend")? idr(sumIdr("spend")) : "—"],
     ["Handed over as cash", sumIdr("payout")? idr(sumIdr("payout")) : "—"],
+    ["Entries corrected", String(list.filter(e=>e.a==="fix").length)],
     ["Settings touched", String(sets)],
     ["In the jar", (base!==null? idr(base)+" → ":"")+idr(now)]
   ];
@@ -1467,7 +1472,8 @@ function exportLog(){
     if(jar){
       rows.push([logDayOf(e)+" "+hhmm(e.t), e.by==="p"?"parent":K(e.k).name, ACT[e.a]||e.a, e.d||"",
         logLine(e).replace(/<[^>]+>/g,"").replace(/"/g,"'"),
-        e.idr? String((e.eur<0?-1:1)*e.idr) : "", e.jar!==undefined? String(e.jar) : ""]);
+        e.a==="fix"? (e.di? String(e.di) : "") : e.idr? String((e.eur<0?-1:1)*e.idr) : "",
+        e.jar!==undefined? String(e.jar) : ""]);
       continue;
     }
     rows.push([logDayOf(e)+" "+hhmm(e.t), e.by==="p"?"parent":K(e.k).name, ACT[e.a]||e.a, e.d||"",
@@ -1503,7 +1509,7 @@ function vParents(c){
    (kid.booksClosed? '' : '<button class="btn small ghost" onclick="addBook()">Tick off a book</button>')+
    '<button class="btn small ghost" onclick="addExtra()">Add extra money</button>'+
    (kid.wordRate?'<button class="btn small ghost" onclick="addWords()">Enter word count</button>':'')+
-   '</div></div></section>'+approvalSection(c)+vReview()+ms+
+   '</div></div></section>'+fixSection()+approvalSection(c)+vReview()+ms+
    '<section><h2>Prices</h2><div class="card">'+
    '<div style="display:flex;gap:8px;flex-wrap:wrap"><button class="btn small" onclick="runFeed(this)">Fetch prices now</button>'+
    '<button class="btn small ghost" onclick="resetBase()">Set start values to today</button></div>'+
@@ -1685,7 +1691,7 @@ function vParentsJar(c){
    '<button class="btn small ghost" onclick="jarMove(\'spend\')"'+(c.balIdr>0?'':' disabled')+'>Take notes out</button>'+
    '<button class="btn small ghost" onclick="jarMove(\'extra\')">Put notes in</button></div>'+
    '<p class="sub" style="margin:12px 0 0">Next '+idr(kid.allowanceIdr||0)+' on '+dday(iso(nextPayday(kid,today())))+'.</p>'+
-   '</div></section>'+vReview()+
+   '</div></section>'+fixSection()+vReview()+
    '<section><h2>Settings for '+esc(kid.name)+'</h2><div class="card">'+
    '<label>Pocket money per week (Rp)</label>'+
    '<input type="number" step="1000" inputmode="numeric" value="'+(Number(kid.allowanceIdr)||0)+'" '+
@@ -1919,6 +1925,116 @@ function resetBase(){
   for(const k of ["btc","etf"]) if(S.prices[k].px) S.prices[k].base=S.prices[k].px;
   for(const c of COMPANIES){ const s=S.prices.basket[c]; if(s.px) s.base=s.px; }
   save(); render();
+}
+/* ---- corrections (parents only) ----
+   A purchase, gift or payout entered wrongly can be changed or deleted here.
+   The record itself is edited in place, because the balance is derived from
+   these arrays. The audit log stays append-only: every correction adds a "fix"
+   entry with the old and the new version and its effect on the balance, so a
+   correction is as visible in the weekly review as the original entry. */
+const FIXWORD={spend:"purchase",extras:"extra money",payouts:"payout"};
+function fixLabel(kind,x){ return kind==="payouts"? (x.note||"") : (x.label||""); }
+function fixDesc(kind,x){
+  const kid=K(), lab=fixLabel(kind,x);
+  const amt= kid.jar||(x.idr!=null&&x.idr!=="")? idr(idrOf(x))+(kid.jar?"":" ("+eur(x.eur)+")") : eur(x.eur);
+  return (lab? lab+", " : "")+amt+", "+dshort(x.date);
+}
+function fixSection(){
+  const kid=K(), items=[];
+  for(const kind of ["spend","extras","payouts"])
+    (kid[kind]||[]).forEach((x,i)=>items.push({kind:kind,i:i,x:x}));
+  if(!items.length) return "";
+  items.sort((a,b)=> a.x.date<b.x.date?1:a.x.date>b.x.date?-1:b.i-a.i);
+  const sign={spend:"− ",extras:"+ ",payouts:"− "};
+  const rows=items.slice(0,20).map(o=>{
+    const x=o.x, amt= kid.jar? idr(idrOf(x)) : fmt(x.eur);
+    return '<div class="row"><div class="grow"><div>'+esc(fixLabel(o.kind,x)||FIXWORD[o.kind])+'</div>'+
+      '<div class="sub">'+dshort(x.date)+' · '+FIXWORD[o.kind]+
+      (!kid.jar&&x.idr? ' · '+idr(x.idr) : '')+'</div></div>'+
+      '<div class="money">'+sign[o.kind]+amt+'</div>'+
+      '<button class="btn small ghost" onclick="fixEntry('+jsq(o.kind)+','+o.i+')">Fix</button></div>';
+  }).join("");
+  return '<section><h2>Correct an entry</h2><div class="card">'+rows+
+    (items.length>20? '<p class="sub" style="margin:10px 0 0">Showing the newest 20 of '+items.length+'.</p>' : '')+
+    '<p class="sub" style="margin:10px 0 0">Every correction is written to the review log with the old and the new value.</p>'+
+    '</div></section>';
+}
+let FX={kind:"",i:-1};
+function fixEntry(kind,i){
+  const kid=K(), x=(kid[kind]||[])[i];
+  if(!x) return;
+  FX={kind:kind,i:i};
+  const inIdr= !!kid.jar || (x.idr!=null&&x.idr!=="");
+  dlgBody.innerHTML='<h3>Correct '+FIXWORD[kind]+'</h3>'+
+    '<p class="sub">Entered as: '+esc(fixDesc(kind,x))+'</p>'+
+    '<label>'+(kind==="payouts"?"Note":kind==="extras"?"Where is it from?":"What was bought?")+'</label>'+
+    '<input id="fx_label" type="text" value="'+esc(fixLabel(kind,x))+'">'+
+    '<label>Amount ('+(inIdr?"Rp":"€")+')</label>'+
+    '<input id="fx_amt" type="number" '+(inIdr?'step="1" inputmode="numeric"':'step="0.01" inputmode="decimal"')+
+    ' value="'+(inIdr? idrOf(x) : x.eur)+'">'+
+    (inIdr&&!kid.jar? '<p class="sub">Converted at the rate it was entered with, €1 = '+idr(x.fx||S.fx)+'.</p>' : '')+
+    '<label>Date</label><input id="fx_date" type="date" value="'+esc(x.date)+'">'+
+    '<div class="dlgbtns"><button class="btn ghost" onclick="fixDelete()" style="color:var(--warn)">Delete</button>'+
+    '<button class="btn ghost" onclick="dlg.close()">Cancel</button>'+
+    '<button class="btn" onclick="fixSave()">Save</button></div>';
+  dlg.showModal();
+}
+/* signed effect on the cash balance (euro) and on the jar (rupiah) of one record */
+function fixEffect(kind,x){
+  const s= kind==="extras"? 1 : -1;
+  return x? {eur:s*(Number(x.eur)||0), idr:s*idrOf(x)} : {eur:0, idr:0};
+}
+function fixLog(kind,before,after){
+  const a=fixEffect(kind,after), b=fixEffect(kind,before);
+  const deur=Math.round((a.eur-b.eur)*100)/100, di=a.idr-b.idr;
+  logEvent(KID,"fix",{d:(after||before).date, kind:kind, p:fixDesc(kind,before),
+    v: after? fixDesc(kind,after) : "", eur:deur, di:di, idr:Math.abs(di)});
+}
+function fixApply(kind,i,v){
+  /* v: {label, amt (number, in the record's own currency), date}; returns an error string or "" */
+  const kid=K(), arr=kid[kind], x=arr&&arr[i];
+  if(!x) return "That entry no longer exists.";
+  if(!/^\d{4}-\d{2}-\d{2}$/.test(String(v.date||""))) return "Please choose a date.";
+  const inIdr= !!kid.jar || (x.idr!=null&&x.idr!=="");
+  const before=Object.assign({},x), after=Object.assign({},x);
+  if(inIdr){
+    const raw=Math.round(Number(v.amt)||0);
+    if(raw<=0) return "Please enter an amount. To remove the entry, use Delete.";
+    const fx=x.fx||S.fx||1;
+    after.idr=raw; after.fx=fx; after.eur=Math.round(raw/fx*100)/100;
+  } else {
+    const e=Math.round((Number(v.amt)||0)*100)/100;
+    if(e<=0) return "Please enter an amount. To remove the entry, use Delete.";
+    after.eur=e;
+  }
+  after.date=v.date;
+  const lab=String(v.label||"").trim();
+  if(kind==="payouts") after.note=lab; else after.label=lab||before.label||FIXWORD[kind];
+  if(JSON.stringify(after)===JSON.stringify(before)) return "";
+  arr[i]=after;
+  fixLog(kind,before,after);
+  return "";
+}
+function fixRemove(kind,i){
+  const arr=K()[kind], x=arr&&arr[i];
+  if(!x) return false;
+  arr.splice(i,1);
+  fixLog(kind,x,null);
+  return true;
+}
+function fixSave(){
+  const val=id=>String((document.getElementById(id)||{}).value||"");
+  const err=fixApply(FX.kind,FX.i,{label:val("fx_label"),
+    amt:Number(val("fx_amt").replace(",","."))||0, date:val("fx_date")});
+  if(err){ alert(err); return; }
+  dlg.close(); save(); render();
+}
+function fixDelete(){
+  const x=(K()[FX.kind]||[])[FX.i];
+  if(!x) return;
+  if(!confirm("Delete this "+FIXWORD[FX.kind]+"? "+fixDesc(FX.kind,x))) return;
+  fixRemove(FX.kind,FX.i);
+  dlg.close(); save(); render();
 }
 function form(title,fields,onOk,note){
   dlgBody.innerHTML='<h3>'+title+'</h3>'+(note?'<p class="sub">'+note+'</p>':'')+fields.map(f=>{

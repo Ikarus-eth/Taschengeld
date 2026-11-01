@@ -370,6 +370,15 @@ Flagged automatically:
 | ticked by *name* | the child ticked her own word week |
 | money added by hand | extra money is the only entry that creates money from nothing |
 | setting changed / backup restored | anything that moves the totals without an activity behind it |
+| corrected by hand | a purchase, extra or payout was changed or deleted in the parent view |
+
+**Correcting an entry.** The parent view lists the newest 20 purchases, extras and payouts
+under *Correct an entry*. Each can be changed (label, amount, date) or deleted. The record is
+edited in place because balances are derived from those arrays; the log gets a `fix` entry
+holding the old and new description, `kind`, and the signed effect on cash (`eur`) and, for
+rupiah records, on the jar (`di`). A rupiah record keeps the rate it was entered with, so
+correcting the amount never re-prices it at today's rate. A save that changes nothing logs
+nothing.
 
 Not a security boundary: it is a record on a device the child holds. It catches casual
 inflation of the numbers, not someone editing `localStorage` directly.
