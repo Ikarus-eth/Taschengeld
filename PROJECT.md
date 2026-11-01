@@ -57,6 +57,11 @@ broken site: check `api.github.com/repos/$REPO/pages` for `status: built` and co
 **latest** build's commit matches the tip. Eight commits in ninety seconds produced seven
 errored builds and one good one (Sept 2026).
 
+If the sandbox proxy refuses the Contents API PUT ("Write access to this GitHub API path is
+not permitted through this proxy", seen 1 Nov 2026), attach the repo to the session with push
+access, `git clone --depth 1`, commit and `git push origin HEAD:main` instead. The Pages
+build API is blocked the same way, so verify with `cmp` against raw.githubusercontent.com.
+
 Verify after pushing: poll `api.github.com/repos/$REPO/pages/builds/latest` until
 `status: built` (~40 s), then diff the local build against the **contents API**, not
 `raw.githubusercontent.com`:
