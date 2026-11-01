@@ -370,7 +370,7 @@ Flagged automatically:
 | ticked by *name* | the child ticked her own word week |
 | money added by hand | extra money is the only entry that creates money from nothing |
 | setting changed / backup restored | anything that moves the totals without an activity behind it |
-| corrected by hand | a purchase, extra or payout was changed or deleted in the parent view |
+| corrected by hand | a purchase, extra or payout was changed or deleted, or a sale undone, in the parent view |
 
 **Correcting an entry.** The parent view lists the newest 20 purchases, extras and payouts
 under *Correct an entry*. Each can be changed (label, amount, date) or deleted. The record is
@@ -379,6 +379,12 @@ holding the old and new description, `kind`, and the signed effect on cash (`eur
 rupiah records, on the jar (`di`). A rupiah record keeps the rate it was entered with, so
 correcting the amount never re-prices it at today's rate. A save that changes nothing logs
 nothing.
+
+**Undoing a sale.** The same section lists sold investments with an *Undo sale* button. It
+removes the sale fields from the deposit, so it returns with its original buy date and
+purchase price: the 365-day clock carries on from the buy date and the 50% match matures as
+if the sale never happened. The balance drops by the sale proceeds. Logged as a `fix` entry
+with `kind: deposits` and the balance effect.
 
 Not a security boundary: it is a record on a device the child holds. It catches casual
 inflation of the numbers, not someone editing `localStorage` directly.

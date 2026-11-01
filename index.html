@@ -1367,7 +1367,9 @@ function logLine(e){
       (e.v?" — bonus kept":" — bonus given up");
     case "setting": return esc(e.label)+": "+esc(e.p)+" → "+esc(e.v);
     case "import": return "A backup was restored onto this iPad";
-    case "fix": return (e.v? "Corrected" : "Deleted")+" "+(FIXWORD[e.kind]||"entry")+": "+esc(e.p)+
+    case "fix": if(e.kind==="deposits") return "Undid sale: "+esc(e.p)+" → "+esc(e.v)+
+        (e.eur? " ("+(e.eur>0?"+":"")+eur(e.eur)+" balance)" : "");
+      return (e.v? "Corrected" : "Deleted")+" "+(FIXWORD[e.kind]||"entry")+": "+esc(e.p)+
       (e.v? " → "+esc(e.v) : "");
     default: return e.a;
   }
@@ -1932,7 +1934,7 @@ function resetBase(){
    these arrays. The audit log stays append-only: every correction adds a "fix"
    entry with the old and the new version and its effect on the balance, so a
    correction is as visible in the weekly review as the original entry. */
-const FIXWORD={spend:"purchase",extras:"extra money",payouts:"payout"};
+const FIXWORD={spend:"purchase",extras:"extra money",payouts:"payout",deposits:"sale"};
 function fixLabel(kind,x){ return kind==="payouts"? (x.note||"") : (x.label||""); }
 function fixDesc(kind,x){
   const kid=K(), lab=fixLabel(kind,x);
@@ -1943,7 +1945,8 @@ function fixSection(){
   const kid=K(), items=[];
   for(const kind of ["spend","extras","payouts"])
     (kid[kind]||[]).forEach((x,i)=>items.push({kind:kind,i:i,x:x}));
-  if(!items.length) return "";
+  const sales=kid.jar? "" : saleRows();
+  if(!items.length&&!sales) return "";
   items.sort((a,b)=> a.x.date<b.x.date?1:a.x.date>b.x.date?-1:b.i-a.i);
   const sign={spend:"− ",extras:"+ ",payouts:"− "};
   const rows=items.slice(0,20).map(o=>{
@@ -1954,10 +1957,49 @@ function fixSection(){
       '<div class="money">'+sign[o.kind]+amt+'</div>'+
       '<button class="btn small ghost" onclick="fixEntry('+jsq(o.kind)+','+o.i+')">Fix</button></div>';
   }).join("");
-  return '<section><h2>Correct an entry</h2><div class="card">'+rows+
+  return '<section><h2>Correct an entry</h2><div class="card">'+rows+sales+
     (items.length>20? '<p class="sub" style="margin:10px 0 0">Showing the newest 20 of '+items.length+'.</p>' : '')+
     '<p class="sub" style="margin:10px 0 0">Every correction is written to the review log with the old and the new value.</p>'+
     '</div></section>';
+}
+/* Undoing a sale puts the deposit back exactly as it was bought: same date,
+   same purchase price, so the one-year clock carries on from the original buy
+   date and the bonus is earned as if it had never been sold. */
+function saleRows(){
+  const sold=(K().deposits||[]).filter(d=>d.sold)
+    .sort((a,b)=> (a.soldDate||"")<(b.soldDate||"")?1:(a.soldDate||"")>(b.soldDate||"")?-1:0);
+  if(!sold.length) return "";
+  return '<div class="weeklabel" style="margin-top:16px">Sold investments</div>'+sold.slice(0,10).map(d=>
+    '<div class="row"><div class="grow"><div>'+esc(INSTR[d.instrument]?INSTR[d.instrument].name:d.instrument)+'</div>'+
+    '<div class="sub">bought '+dshort(d.date)+' for '+fmt(d.eur)+' · sold '+dshort(d.soldDate||d.date)+
+    (d.matchClaimed?" · bonus kept":" · bonus given up")+'</div></div>'+
+    '<div class="money">'+fmt(d.soldValue||0)+'</div>'+
+    '<button class="btn small ghost" onclick="undoSale('+jsq(d.id)+')">Undo sale</button></div>').join("");
+}
+function saleDesc(d){
+  return (INSTR[d.instrument]?INSTR[d.instrument].name:d.instrument)+" "+eur(d.eur)+" bought "+dshort(d.date);
+}
+function undoSaleApply(id){
+  const kid=K(), d=(kid.deposits||[]).find(x=>String(x.id)===String(id));
+  if(!d||!d.sold) return false;
+  const before=calc(KID).cash, p=saleDesc(d)+", sold "+dshort(d.soldDate||d.date)+" for "+eur(d.soldValue||0);
+  for(const f of ["sold","soldValue","soldDate","soldPx","matchClaimed"]) delete d[f];
+  const after=calc(KID).cash, left=Math.max(0,365-daysHeld(d));
+  logEvent(KID,"fix",{d:d.date, kind:"deposits", p:p,
+    v:"held again"+(left? ", "+left+" days to the bonus" : ", bonus earned"),
+    eur:Math.round((after-before)*100)/100});
+  return true;
+}
+function undoSale(id){
+  const kid=K(), d=(kid.deposits||[]).find(x=>String(x.id)===String(id));
+  if(!d||!d.sold) return;
+  const c=calc(KID), newCash=c.cash-(d.soldValue||0);
+  const left=Math.max(0,365-daysHeld(d));
+  if(!confirm("Undo this sale?\n\n"+saleDesc(d)+". It goes back into the portfolio with its original "+
+    "buy date and price"+(left? ", so "+left+" days remain until the bonus." : " and the bonus is earned.")+
+    "\n\nBalance: "+fmt(c.cash)+" → "+fmt(newCash)+(newCash<-0.005? " (below zero)" : ""))) return;
+  undoSaleApply(id);
+  save(); render();
 }
 let FX={kind:"",i:-1};
 function fixEntry(kind,i){
